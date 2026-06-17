@@ -56,12 +56,15 @@
         .login-grid-bg svg {
             width: 100%;
             height: 100%;
+            animation: gridBreath 6s ease-in-out infinite;
         }
         /* Radial + linear vignette over the grid — fades edges & top */
         .login-grid-bg::after {
             content: '';
             position: absolute;
             inset: 0;
+            z-index: 1;
+            pointer-events: none;
             background:
                 /* top fade to hide where VP is above center */
                 linear-gradient(to bottom,
@@ -93,12 +96,34 @@
             );
             filter: blur(40px);
             pointer-events: none;
+            animation: glowPulse 6s ease-in-out infinite;
         }
         /* The login card sits above the grid */
         .login-card {
             position: relative;
             z-index: 10;
         }
+
+
+        /* ── Keyframes ── */
+
+        /* Grid breathes: dims slightly then brightens, offset so it leads the wave */
+        @keyframes gridBreath {
+            0%   { opacity: 0.70; }
+            15%  { opacity: 1.00; }
+            50%  { opacity: 0.80; }
+            85%  { opacity: 1.00; }
+            100% { opacity: 0.70; }
+        }
+
+        /* Glow expands and contracts in sync with breath */
+        @keyframes glowPulse {
+            0%   { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; }
+            30%  { transform: translate(-50%, -50%) scale(1.20); opacity: 1.0; }
+            60%  { transform: translate(-50%, -50%) scale(0.95); opacity: 0.7; }
+            100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; }
+        }
+
     </style>
 </head>
 <body class="login-page min-h-screen flex items-center justify-center p-6 text-foreground relative overflow-hidden">
