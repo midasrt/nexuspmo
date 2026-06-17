@@ -113,6 +113,7 @@
                 <label for="create_role" class="text-[10px] uppercase text-muted-foreground">Role</label>
                 <select name="role" id="create_role" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none uppercase">
                     <option value="viewer">Viewer (Read-Only)</option>
+                    <option value="manager">Manager (Full CRUD, No Settings)</option>
                     <option value="admin">Admin (Full Control)</option>
                 </select>
             </div>
@@ -158,6 +159,7 @@
                 <label for="edit_role" class="text-[10px] uppercase text-muted-foreground">Role</label>
                 <select name="role" id="edit_role" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none uppercase">
                     <option value="viewer">Viewer (Read-Only)</option>
+                    <option value="manager">Manager (Full CRUD, No Settings)</option>
                     <option value="admin">Admin (Full Control)</option>
                 </select>
             </div>

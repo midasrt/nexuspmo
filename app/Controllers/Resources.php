@@ -164,6 +164,9 @@ class Resources extends BaseController
 
         \App\Controllers\Projects::recalculateAllResourceUtilizations();
 
+        helper('activity');
+        log_activity('CREATE', 'resources', null, $name, "Created resource [{$name}] in [{$department}]");
+
         return redirect()->to('/resource')->with('success', 'Resource created successfully.');
     }
 
@@ -206,6 +209,9 @@ class Resources extends BaseController
 
         \App\Controllers\Projects::recalculateAllResourceUtilizations();
 
+        helper('activity');
+        log_activity('UPDATE', 'resources', (int)$id, $name, "Updated resource [{$name}]");
+
         return redirect()->to('/resource')->with('success', 'Resource updated successfully.');
     }
 
@@ -226,6 +232,9 @@ class Resources extends BaseController
         $resourceModel->delete($id);
 
         \App\Controllers\Projects::recalculateAllResourceUtilizations();
+
+        helper('activity');
+        log_activity('DELETE', 'resources', (int)$id, $resource['name'], "Deleted resource [{$resource['name']}]");
 
         return redirect()->to('/resource')->with('success', 'Resource deleted successfully.');
     }

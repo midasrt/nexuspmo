@@ -8,7 +8,7 @@ class Users extends BaseController
 {
     public function index()
     {
-        // Double-check admin access
+        // Double-check admin access (managers cannot access User Management)
         if (session()->get('role') !== 'admin') {
             return redirect()->to(base_url())->with('error', 'Access Denied: Admin role required.');
         }
@@ -48,6 +48,9 @@ class Users extends BaseController
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
         ]);
+
+        helper('activity');
+        log_activity('CREATE', 'users', null, $name, "Created user [{$email}] with role [{$role}]");
 
         return redirect()->to(base_url('users'))->with('success', 'User created successfully.');
     }
@@ -99,6 +102,9 @@ class Users extends BaseController
             ]);
         }
 
+        helper('activity');
+        log_activity('UPDATE', 'users', (int)$id, $name, "Updated user [{$email}] role to [{$role}]");
+
         return redirect()->to(base_url('users'))->with('success', 'User updated successfully.');
     }
 
@@ -114,6 +120,13 @@ class Users extends BaseController
         }
 
         $userModel = new UserModel();
+        $user = $userModel->find($id);
+
+        if ($user) {
+            helper('activity');
+            log_activity('DELETE', 'users', (int)$id, $user['name'], "Deleted user [{$user['email']}]");
+        }
+
         $userModel->delete($id);
 
         return redirect()->to(base_url('users'))->with('success', 'User deleted successfully.');

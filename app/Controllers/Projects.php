@@ -288,6 +288,9 @@ class Projects extends BaseController
 
         $this->updateProjectProgress($id);
 
+        helper('activity');
+        log_activity('CREATE', 'projects', null, $name, "Created project [{$code}] ID [{$id}]");
+
         return redirect()->to('/projects')->with('success', 'Project created successfully.');
     }
 
@@ -386,6 +389,9 @@ class Projects extends BaseController
             $this->logProjectActivity($id, implode('; ', $notes), $oldState);
         }
 
+        helper('activity');
+        log_activity('UPDATE', 'projects', null, $project['name'] ?? $id, "Updated project [{$id}]");
+
         return redirect()->to('/projects')->with('success', 'Project updated successfully.');
     }
 
@@ -419,6 +425,9 @@ class Projects extends BaseController
 
         // Finally delete project
         $projectModel->delete($id);
+
+        helper('activity');
+        log_activity('DELETE', 'projects', null, $id, "Deleted project ID [{$id}]");
 
         return redirect()->to('/projects')->with('success', 'Project deleted successfully.');
     }

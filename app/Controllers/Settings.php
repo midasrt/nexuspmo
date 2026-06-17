@@ -52,6 +52,9 @@ class Settings extends BaseController
         
         // Trigger utilization update for all resources
         \App\Controllers\Projects::recalculateAllResourceUtilizations();
+
+        helper('activity');
+        log_activity('UPDATE', 'settings', null, 'Resource Settings', "daily_work_hours={$dailyWorkHours}, work_days_per_week={$workDaysPerWeek}");
         
         return redirect()->to('/settings')->with('success', 'Resource management settings updated successfully.');
     }
@@ -82,6 +85,9 @@ class Settings extends BaseController
             'criteria' => $criteria,
             'color'    => $color,
         ]);
+
+        helper('activity');
+        log_activity('CREATE', 'settings', null, "Status: {$label}", "Created status definition [{$status}]");
 
         return redirect()->to('/settings')->with('success', 'Status definition created successfully.');
     }
@@ -120,6 +126,9 @@ class Settings extends BaseController
             'color'    => $color,
         ]);
 
+        helper('activity');
+        log_activity('UPDATE', 'settings', (int)$id, "Status: {$label}", "Updated status definition [{$status}]");
+
         return redirect()->to('/settings')->with('success', 'Status definition updated successfully.');
     }
 
@@ -131,6 +140,10 @@ class Settings extends BaseController
         }
 
         $statusDefModel->delete($id);
+
+        helper('activity');
+        log_activity('DELETE', 'settings', (int)$id, null, "Deleted status definition ID [{$id}]");
+
         return redirect()->to('/settings')->with('success', 'Status definition deleted successfully.');
     }
 
@@ -152,6 +165,9 @@ class Settings extends BaseController
             'name'        => $name,
             'description' => $description,
         ]);
+
+        helper('activity');
+        log_activity('CREATE', 'settings', null, "Department: {$name}", "Created department [{$name}]");
 
         return redirect()->to('/settings')->with('success', 'Department created successfully.');
     }
@@ -187,6 +203,9 @@ class Settings extends BaseController
             'description' => $description,
         ]);
 
+        helper('activity');
+        log_activity('UPDATE', 'settings', (int)$id, "Department: {$name}", "Updated department [{$org['name']}] → [{$name}]");
+
         return redirect()->to('/settings')->with('success', 'Department updated successfully.');
     }
 
@@ -208,6 +227,10 @@ class Settings extends BaseController
         }
 
         $orgModel->delete($id);
+
+        helper('activity');
+        log_activity('DELETE', 'settings', (int)$id, "Department: {$org['name']}", "Deleted department [{$org['name']}]");
+
         return redirect()->to('/settings')->with('success', 'Department deleted successfully.');
     }
 }

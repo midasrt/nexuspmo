@@ -118,7 +118,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen text-foreground <?= session()->get('role') === 'viewer' ? 'role-viewer' : '' ?>">
+<body class="min-h-screen text-foreground <?= in_array(session()->get('role'), ['viewer']) ? 'role-viewer' : '' ?>">
 
     <!-- Depth-of-Field Blur Background -->
     <div class="dof-bg">
@@ -140,12 +140,19 @@
     $menuItems[] = ['title' => 'Resource', 'url' => base_url('resource'), 'icon' => 'users', 'path' => '/resource'];
     $menuItems[] = ['title' => 'Squads', 'url' => base_url('squads'), 'icon' => 'boxes', 'path' => '/squads'];
 
-    if (session()->get('role') !== 'viewer') {
+    // Settings: admin only
+    if (session()->get('role') === 'admin') {
         $menuItems[] = ['title' => 'Settings', 'url' => base_url('settings'), 'icon' => 'settings', 'path' => '/settings'];
     }
 
+    // Users: admin only
     if (session()->get('role') === 'admin') {
         $menuItems[] = ['title' => 'Users', 'url' => base_url('users'), 'icon' => 'user-cog', 'path' => '/users'];
+    }
+
+    // Activity Log: admin and manager
+    if (in_array(session()->get('role'), ['admin', 'manager'])) {
+        $menuItems[] = ['title' => 'Activity Log', 'url' => base_url('activity-log'), 'icon' => 'activity', 'path' => '/activity-log'];
     }
 
     foreach ($menuItems as &$item) {

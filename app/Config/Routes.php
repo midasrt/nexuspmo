@@ -99,3 +99,6 @@ $routes->get('/users', 'Users::index');
 $routes->post('/users/create', 'Users::create');
 $routes->post('/users/update/(:num)', 'Users::update/$1');
 $routes->post('/users/delete/(:num)', 'Users::delete/$1');
+
+// Activity Log
+$routes->get('/activity-log', 'ActivityLog::index');

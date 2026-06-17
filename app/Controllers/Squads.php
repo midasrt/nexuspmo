@@ -101,6 +101,9 @@ class Squads extends BaseController
             'mission' => $mission,
         ]);
 
+        helper('activity');
+        log_activity('CREATE', 'squads', null, $name, "Created squad led by [{$lead}]");
+
         return redirect()->to('/squads')->with('success', 'Squad created successfully.');
     }
 
@@ -138,6 +141,9 @@ class Squads extends BaseController
             'mission' => $mission,
         ]);
 
+        helper('activity');
+        log_activity('UPDATE', 'squads', (int)$id, $name, "Updated squad [{$squad['name']}] → [{$name}]");
+
         return redirect()->to('/squads')->with('success', 'Squad updated successfully.');
     }
 
@@ -159,6 +165,9 @@ class Squads extends BaseController
         $db->table('projects')->where('squad', $squad['name'])->update(['squad' => null]);
 
         $squadModel->delete($id);
+
+        helper('activity');
+        log_activity('DELETE', 'squads', (int)$id, $squad['name'], "Deleted squad [{$squad['name']}]");
 
         return redirect()->to('/squads')->with('success', 'Squad deleted successfully.');
     }
@@ -185,6 +194,8 @@ class Squads extends BaseController
                 'squad_id'    => $squadId,
                 'resource_id' => $resourceId
             ]);
+            helper('activity');
+            log_activity('UPDATE', 'squads', (int)$squadId, null, "Added resource ID [{$resourceId}] to squad ID [{$squadId}]");
         }
 
         return redirect()->to('/squads')->with('success', 'Resource added to squad successfully.');
@@ -197,6 +208,9 @@ class Squads extends BaseController
             ->where('squad_id', $squadId)
             ->where('resource_id', $resourceId)
             ->delete();
+
+        helper('activity');
+        log_activity('UPDATE', 'squads', (int)$squadId, null, "Removed resource ID [{$resourceId}] from squad ID [{$squadId}]");
 
         return redirect()->to('/squads')->with('success', 'Resource removed from squad successfully.');
     }

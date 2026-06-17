@@ -56,7 +56,7 @@ $statusBgs = [
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
                     <?php foreach ($projects as $p): ?>
                         <label class="rounded-xl border p-4 text-left transition-all cursor-pointer flex flex-col justify-between <?= $selectedId === $p['id'] ? 'bg-ink text-paper border-ink shadow-md' : 'bg-background text-ink border-ink/15 hover:border-ink/50 shadow-sm' ?>">
-                            <input type="radio" name="project" value="<?= $p['id'] ?>" <?= $selectedId === $p['id'] ? 'checked' : '' ?> class="hidden" />
+                            <input type="radio" name="project" value="<?= $p['id'] ?>" <?= $selectedId === $p['id'] ? 'checked' : '' ?> class="hidden" onchange="this.form.submit()" />
                             <div class="mono text-[10px] uppercase tracking-widest <?= $selectedId === $p['id'] ? 'text-paper/70' : 'text-muted-foreground' ?>">
                                 <?= esc($p['code']) ?>
                             </div>
