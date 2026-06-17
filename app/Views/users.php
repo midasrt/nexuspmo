@@ -101,7 +101,12 @@
 
             <div class="flex flex-col gap-1">
                 <label for="create_password" class="text-[10px] uppercase text-muted-foreground">Password</label>
-                <input type="password" name="password" id="create_password" required placeholder="Password" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
+                <div class="relative">
+                    <input type="password" name="password" id="create_password" required placeholder="Password" class="w-full rounded-xl border border-ink/20 bg-background px-3 py-2 pr-10 text-sm focus:outline-none">
+                    <button type="button" onclick="togglePassword('create_password', this)" tabindex="-1" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink transition-colors" title="Toggle password visibility">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-col gap-1">
@@ -141,7 +146,12 @@
 
             <div class="flex flex-col gap-1">
                 <label for="edit_password" class="text-[10px] uppercase text-muted-foreground">New Password (Optional)</label>
-                <input type="password" name="password" id="edit_password" placeholder="Leave blank to keep current" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
+                <div class="relative">
+                    <input type="password" name="password" id="edit_password" placeholder="Leave blank to keep current" class="w-full rounded-xl border border-ink/20 bg-background px-3 py-2 pr-10 text-sm focus:outline-none">
+                    <button type="button" onclick="togglePassword('edit_password', this)" tabindex="-1" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink transition-colors" title="Toggle password visibility">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-col gap-1">

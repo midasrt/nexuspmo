@@ -39,6 +39,7 @@
         }
     </script>
     <link rel="stylesheet" href="<?= base_url('css/style.css') ?>">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6 bg-background text-foreground relative overflow-hidden">
 
@@ -87,7 +88,12 @@
 
             <div class="flex flex-col gap-1">
                 <label for="password" class="text-[10px] uppercase text-muted-foreground">Password</label>
-                <input type="password" name="password" id="password" required placeholder="Password" class="w-full bg-background/50 border border-ink/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20">
+                <div class="relative">
+                    <input type="password" name="password" id="password" required placeholder="Password" class="w-full bg-background/50 border border-ink/20 rounded-xl px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20">
+                    <button type="button" onclick="togglePassword('password', this)" tabindex="-1" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-ink transition-colors" title="Toggle password visibility">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="w-full rounded-full bg-ink text-paper py-3 text-xs uppercase tracking-widest font-bold hover:bg-ink/90 mt-2 shadow-sm transition-colors">
@@ -101,5 +107,22 @@
         </div>
     </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    const icon = btn.querySelector('i');
+    if (icon) {
+        icon.setAttribute('data-lucide', isHidden ? 'eye-off' : 'eye');
+        lucide.createIcons({ nodes: [icon] });
+    }
+}
+</script>
 </body>
 </html>
