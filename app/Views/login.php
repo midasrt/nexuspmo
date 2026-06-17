@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login // NEXUS</title>
+    <title>Login // ATLAS</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,13 +40,158 @@
     </script>
     <link rel="stylesheet" href="<?= base_url('css/style.css') ?>">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ── Login-specific: DOF Grid Background ── */
+        body.login-page {
+            background: var(--background);
+        }
+        .login-grid-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        /* The SVG grid fills the viewport */
+        .login-grid-bg svg {
+            width: 100%;
+            height: 100%;
+        }
+        /* Radial + linear vignette over the grid — fades edges & top */
+        .login-grid-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                /* top fade to hide where VP is above center */
+                linear-gradient(to bottom,
+                    var(--background) 0%,
+                    transparent 28%,
+                    transparent 72%,
+                    var(--background) 100%
+                ),
+                /* side vignette */
+                radial-gradient(
+                    ellipse 90% 80% at 50% 80%,
+                    transparent 0%,
+                    var(--background) 100%
+                );
+        }
+        /* Soft glow at vanishing point */
+        .login-grid-glow {
+            position: absolute;
+            left: 50%;
+            top: 46%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(
+                ellipse at center,
+                color-mix(in srgb, var(--ink) 4%, transparent) 0%,
+                transparent 70%
+            );
+            filter: blur(40px);
+            pointer-events: none;
+        }
+        /* The login card sits above the grid */
+        .login-card {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 bg-background text-foreground relative overflow-hidden">
+<body class="login-page min-h-screen flex items-center justify-center p-6 text-foreground relative overflow-hidden">
 
-    <!-- Depth-of-Field Blur Background -->
-    <div class="dof-bg"></div>
+    <!-- DOF Grid Background -->
+    <div class="login-grid-bg">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- DOF blur filter: blurs lines near vanishing point -->
+                <filter id="dofBlur" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.2"/>
+                </filter>
+                <filter id="dofBlurMid" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="0.5"/>
+                </filter>
 
-    <div class="w-full max-w-md bg-card/70 backdrop-blur rounded-2xl border border-ink/15 p-8 flex flex-col gap-6 shadow-sm z-10">
+                <!-- Radial fade mask: visible in lower/center, invisible toward edges and top VP -->
+                <radialGradient id="gridFade" cx="50%" cy="100%" r="85%" gradientUnits="userSpaceOnUse"
+                    gradientTransform="matrix(1,0,0,0.55,0,405)">
+                    <stop offset="0%"   stop-color="white" stop-opacity="1"/>
+                    <stop offset="50%"  stop-color="white" stop-opacity="0.7"/>
+                    <stop offset="80%"  stop-color="white" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="white" stop-opacity="0"/>
+                </radialGradient>
+                <mask id="gridMask">
+                    <rect width="1440" height="900" fill="url(#gridFade)"/>
+                </mask>
+
+                <!-- Horizon fade: lines near VP fade out (DOF blur zone) -->
+                <linearGradient id="horizFade" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="white" stop-opacity="0"/>
+                    <stop offset="38%"  stop-color="white" stop-opacity="0.15"/>
+                    <stop offset="55%"  stop-color="white" stop-opacity="0.7"/>
+                    <stop offset="100%" stop-color="white" stop-opacity="1"/>
+                </linearGradient>
+                <mask id="horizMask">
+                    <rect width="1440" height="900" fill="url(#horizFade)"/>
+                </mask>
+            </defs>
+
+            <!-- Background fill -->
+            <rect width="1440" height="900" fill="var(--background)"/>
+
+            <?php
+            $vx = 720; $vy = 418;
+
+            // ── Radial / converging lines from vanishing point ──
+            // Far group (near VP): blurred, very faint
+            $numRays = 36;
+            echo '<g mask="url(#gridMask)" filter="url(#dofBlur)" opacity="0.85">';
+            for ($i = 0; $i <= $numRays; $i++):
+                $bx = -120 + ($i / $numRays) * 1680;
+                $by = 930;
+                $dist = abs($i / $numRays - 0.5) * 2;
+                $op = round(0.05 + $dist * 0.11, 3);
+                echo '<line x1="'.$vx.'" y1="'.$vy.'" x2="'.round($bx).'" y2="'.$by.'"'
+                   .' stroke="var(--ink)" stroke-width="0.6" opacity="'.$op.'"/>';
+            endfor;
+            echo '</g>';
+
+            // ── Horizontal convergence lines ──
+            // Near-VP section: apply blur, very faint (DOF effect)
+            $closeYStops = [422, 428, 435, 443, 452, 462, 473, 486, 501, 518, 537];
+            echo '<g mask="url(#horizMask)" filter="url(#dofBlur)">';
+            foreach ($closeYStops as $y):
+                $t = ($y - $vy) / (900 - $vy);
+                $xL = $vx - ($vx * 1.6 * $t);
+                $xR = $vx + ((1440 - $vx) * 1.6 * $t);
+                $op = round(0.02 + $t * 0.04, 3);
+                echo '<line x1="'.round($xL).'" y1="'.$y.'" x2="'.round($xR).'" y2="'.$y.'"'
+                   .' stroke="var(--ink)" stroke-width="0.6" opacity="'.$op.'"/>';
+            endforeach;
+            echo '</g>';
+
+            // Mid section: slight blur
+            $midYStops = [558, 582, 610, 642, 678, 718, 762, 810, 860, 900];
+            echo '<g mask="url(#gridMask)" filter="url(#dofBlurMid)">';
+            foreach ($midYStops as $y):
+                $t = ($y - $vy) / (900 - $vy);
+                $xL = $vx - ($vx * 1.6 * $t);
+                $xR = $vx + ((1440 - $vx) * 1.6 * $t);
+                $op = round(0.04 + $t * 0.09, 3);
+                echo '<line x1="'.round($xL).'" y1="'.$y.'" x2="'.round($xR).'" y2="'.$y.'"'
+                   .' stroke="var(--ink)" stroke-width="0.7" opacity="'.$op.'"/>';
+            endforeach;
+            echo '</g>';
+            ?>
+        </svg>
+        <!-- Soft horizon glow at vanishing point -->
+        <div class="login-grid-glow"></div>
+    </div>
+
+    <div class="login-card w-full max-w-md bg-card/70 backdrop-blur rounded-2xl border border-ink/15 p-8 flex flex-col gap-6 shadow-sm">
         <!-- Logo Header -->
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-ink text-paper rounded-xl flex items-center justify-center font-display font-black text-xl shadow-sm">
@@ -54,7 +199,7 @@
             </div>
             <div class="leading-tight">
                 <div class="mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Gtech PMO</div>
-                <div class="font-display text-lg font-black uppercase text-ink">NEXUS</div>
+                <div class="font-display text-lg font-black uppercase text-ink">ATLAS</div>
             </div>
         </div>
 

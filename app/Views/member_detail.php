@@ -29,7 +29,7 @@ function getUtilColorLocal($u) {
                 <h1 class="font-display text-2xl md:text-3xl font-black uppercase mt-1 tracking-tight">Resource Profile</h1>
             </div>
             <div class="mono text-xs text-muted-foreground uppercase tracking-widest">
-                Nexus ID: #<?= sprintf("%03d", $member['id']) ?>
+                Atlas ID: #<?= sprintf("%03d", $member['id']) ?>
             </div>
         </div>
     </header>
