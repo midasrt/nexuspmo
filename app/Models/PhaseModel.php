@@ -11,6 +11,6 @@ class PhaseModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $allowedFields    = [
-        'project_id', 'name', 'description', 'start', 'end', 'status', 'sequence'
+        'project_id', 'name', 'description', 'start', 'end', 'status', 'sequence', 'resource_id'
     ];
 }

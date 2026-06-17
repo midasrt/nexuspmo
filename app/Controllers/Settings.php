@@ -20,13 +20,40 @@ class Settings extends BaseController
         $orgModel = new OrgStructureModel();
         $orgStructures = $orgModel->findAll();
 
+        $settingsModel = new \App\Models\SettingsModel();
+        $resourceSettings = [
+            'daily_work_hours' => $settingsModel->getSetting('daily_work_hours', 8),
+            'work_days_per_week' => $settingsModel->getSetting('work_days_per_week', 5),
+        ];
+
         return view('settings', [
             'squads'            => $squads,
             'statusDefinitions' => $statusDefinitions,
             'orgStructures'     => $orgStructures,
+            'resourceSettings'  => $resourceSettings,
             'title'             => 'Settings // PMO',
             'currentPath'       => '/settings'
         ]);
+    }
+
+    public function updateResources()
+    {
+        $settingsModel = new \App\Models\SettingsModel();
+        
+        $dailyWorkHours = $this->request->getPost('daily_work_hours');
+        $workDaysPerWeek = $this->request->getPost('work_days_per_week');
+        
+        if ($dailyWorkHours === null || $workDaysPerWeek === null) {
+            return redirect()->back()->with('error', 'All settings fields are required.');
+        }
+        
+        $settingsModel->setSetting('daily_work_hours', $dailyWorkHours);
+        $settingsModel->setSetting('work_days_per_week', $workDaysPerWeek);
+        
+        // Trigger utilization update for all resources
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
+        
+        return redirect()->to('/settings')->with('success', 'Resource management settings updated successfully.');
     }
 
     public function createStatus()

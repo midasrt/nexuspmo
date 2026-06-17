@@ -38,9 +38,9 @@ class AuthFilter implements FilterInterface
                 return redirect()->back()->with('error', 'Access Denied: Viewer role is read-only.');
             }
 
-            // Viewers cannot access the user management page
-            if (strpos($uri, 'users') === 0) {
-                return redirect()->to(base_url())->with('error', 'Access Denied: Only Admins can access User Management.');
+            // Viewers cannot access the user management, settings, or budget pages
+            if (strpos($uri, 'users') === 0 || strpos($uri, 'settings') === 0 || strpos($uri, 'budget') === 0) {
+                return redirect()->to(base_url())->with('error', 'Access Denied: Viewers do not have access to this page.');
             }
         }
     }

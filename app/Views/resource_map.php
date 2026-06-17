@@ -3,10 +3,10 @@
 <?= $this->section('content') ?>
 <?php
 $roleHex = [
-    'FE' => '#34d399',
-    'BE' => '#fbbf24',
-    'QA' => '#f472b6',
-    'BA' => '#a78bfa',
+    'FE' => 'var(--status-ontrack)',
+    'BE' => 'var(--status-atrisk)',
+    'QA' => 'var(--status-delayed)',
+    'BA' => 'var(--status-backlog)',
 ];
 
 $roleBgs = [
@@ -57,72 +57,70 @@ $H = ceil(count($groups) / $cols) * $rowH + 40;
 if ($H < 400) $H = 400; // Minimum height
 ?>
 
-<div>
+<div class="min-h-screen pb-24">
     <!-- Sub-header / Back button -->
-    <div class="border-b border-foreground bg-background">
-        <div class="max-w-[1400px] mx-auto px-6 py-3">
-            <a href="<?= base_url('resource') ?>" class="inline-flex items-center gap-2 mono text-[10px] uppercase tracking-widest brutal-border bg-card px-3 py-1.5 brutal-hover">
-                <i data-lucide="arrow-left" class="h-3 w-3" stroke-width="3"></i>
+    <div class="border-b border-ink/15 no-print">
+        <div class="w-full px-8 lg:px-14 py-4 flex items-center justify-between">
+            <a href="<?= base_url('resource') ?>" class="rounded-full border border-ink/20 bg-card text-ink hover:bg-secondary px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                 Back to Resource
             </a>
         </div>
     </div>
 
     <!-- Map Container -->
-    <div class="max-w-[1400px] mx-auto p-6">
+    <div class="w-full px-8 lg:px-14 mt-8">
         
         <!-- Header -->
-        <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
             <div>
-                <div class="mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                    Resource // Map
-                </div>
-                <h1 class="mono text-3xl md:text-4xl font-black uppercase tracking-tight mt-1">
+                <span class="eyebrow">Resource // Map</span>
+                <h1 class="font-display text-2xl md:text-3xl font-black uppercase mt-1 tracking-tight">
                     Project ↔ Resource Mesh
                 </h1>
             </div>
             
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- Legend -->
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-1.5">
                     <?php foreach (['FE', 'BE', 'QA', 'BA'] as $role): ?>
-                        <div class="flex items-center gap-1.5 border border-foreground px-2 py-1 bg-card">
-                            <span class="inline-block w-3 h-3 border border-foreground <?= $roleBgs[$role] ?>"></span>
-                            <span class="mono text-[10px] uppercase tracking-widest"><?= $role ?></span>
+                        <div class="flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1 bg-background text-[10px] font-mono uppercase tracking-wider font-bold">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full border border-ink/10 <?= $roleBgs[$role] ?>"></span>
+                            <span><?= $role ?></span>
                         </div>
                     <?php endforeach; ?>
                 </div>
 
-                <button onclick="exportMapPdf()" class="brutal-border bg-foreground text-background px-4 py-2 mono text-xs uppercase tracking-widest font-black brutal-hover flex items-center gap-2">
-                    <i data-lucide="download" class="h-3.5 w-3.5" stroke-width="3"></i>
+                <button onclick="exportMapPdf()" class="rounded-full border border-ink/20 bg-ink text-paper hover:bg-ink/90 px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
                     Export PDF
                 </button>
             </div>
         </div>
 
         <!-- SVG Map Card -->
-        <div id="map-capture" class="brutal-border bg-card p-4 brutal-shadow">
+        <div id="map-capture" class="rounded-2xl border border-ink/15 bg-card p-6 overflow-x-auto no-scrollbar shadow-sm">
             <svg viewBox="0 0 <?= $W ?> <?= $H ?>" class="w-full h-auto bg-card" style="min-width: 700px;">
                 <?php foreach ($projectNodes as $p): ?>
                     <g>
                         <!-- Lines connecting project center to resource nodes -->
                         <?php foreach ($p['nodes'] as $n): ?>
-                            <line x1="<?= $p['cx'] ?>" y1="<?= $p['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="currentColor" stroke-width="1" class="text-foreground/40" />
+                            <line x1="<?= $p['cx'] ?>" y1="<?= $p['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="var(--ink)" stroke-width="0.6" opacity="0.25" />
                         <?php endforeach; ?>
 
                         <!-- Central Project Box -->
                         <g>
-                            <rect x="<?= $p['cx'] - 130 ?>" y="<?= $p['cy'] - 30 ?>" width="260" height="60" class="fill-foreground" />
-                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] - 10 ?>" text-anchor="middle" class="fill-background mono" style="font-size: 9px; letter-spacing: 1px;">
+                            <rect x="<?= $p['cx'] - 130 ?>" y="<?= $p['cy'] - 30 ?>" width="260" height="60" rx="12" fill="var(--ink)" />
+                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] - 10 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[9px] uppercase tracking-widest opacity-80">
                                 <?= esc($p['code']) ?>
                             </text>
-                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] + 6 ?>" text-anchor="middle" class="fill-background mono" style="font-size: 11px; font-weight: 900; letter-spacing: 1px;">
+                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] + 6 ?>" text-anchor="middle" fill="var(--paper)" class="font-display text-xs font-bold uppercase tracking-tight">
                                 <?php
                                 $nameParts = explode('//', $p['name']);
-                                echo esc(trim($nameParts[0]));
+                                echo esc(substr(trim($nameParts[0]), 0, 32));
                                 ?>
                             </text>
-                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] + 22 ?>" text-anchor="middle" class="fill-background/70 mono" style="font-size: 9px; letter-spacing: 1px;">
+                            <text x="<?= $p['cx'] ?>" y="<?= $p['cy'] + 21 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[8px] uppercase tracking-widest opacity-70">
                                 <?= count($p['nodes']) ?> RESOURCES
                             </text>
                         </g>
@@ -130,14 +128,14 @@ if ($H < 400) $H = 400; // Minimum height
                         <!-- Surrounding Resource Nodes -->
                         <?php foreach ($p['nodes'] as $n): ?>
                             <g>
-                                <circle cx="<?= $n['x'] ?>" cy="<?= $n['y'] ?>" r="22" fill="<?= $roleHex[$n['resource']['role']] ?>" stroke="currentColor" stroke-width="1.2" class="text-foreground" />
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 3 ?>" text-anchor="middle" class="mono" style="font-size: 9px; font-weight: 900;">
+                                <circle cx="<?= $n['x'] ?>" cy="<?= $n['y'] ?>" r="20" fill="<?= $roleHex[$n['resource']['role']] ?>" stroke="var(--ink)" stroke-width="0.8" />
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 3 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[9px] font-bold">
                                     <?= esc($n['resource']['role']) ?>
                                 </text>
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 36 ?>" text-anchor="middle" class="fill-foreground mono" style="font-size: 9px; font-weight: 700;">
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 34 ?>" text-anchor="middle" fill="var(--ink)" class="font-display text-[10px] font-semibold uppercase">
                                     <?= esc($n['resource']['name']) ?>
                                 </text>
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 48 ?>" text-anchor="middle" class="fill-muted-foreground mono" style="font-size: 8px;">
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 45 ?>" text-anchor="middle" fill="var(--muted-foreground)" class="font-mono text-[8px]">
                                     <?= $n['resource']['utilization'] ?>% · <?= $n['resource']['status'] === 'employee' ? 'EMP' : 'OUT' ?>
                                 </text>
                             </g>
@@ -149,27 +147,5 @@ if ($H < 400) $H = 400; // Minimum height
     </div>
 </div>
 
-<script>
-    async function exportMapPdf() {
-        const { jsPDF } = window.jspdf;
-        const element = document.getElementById('map-capture');
-        
-        // Temporarily add class for print colors if needed, html2canvas handles OKLCH colors, 
-        // but setting scale 2 ensures high res rendering
-        const canvas = await html2canvas(element, {
-            backgroundColor: "#f5efe1",
-            scale: 2
-        });
-        
-        const img = canvas.toDataURL("image/png");
-        const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a3" });
-        const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = pdf.internal.pageSize.getHeight();
-        const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-        const w = canvas.width * ratio;
-        const h = canvas.height * ratio;
-        pdf.addImage(img, "PNG", (pageW - w) / 2, (pageH - h) / 2, w, h);
-        pdf.save("resource-map.pdf");
-    }
-</script>
+<script src="<?= base_url('js/resource_map.js') ?>"></script>
 <?= $this->endSection() ?>

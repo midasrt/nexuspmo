@@ -10,6 +10,7 @@ class Resources extends BaseController
 {
     public function index()
     {
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
         $resourceModel = new ResourceModel();
         $resources = $resourceModel->findAll();
 
@@ -72,44 +73,15 @@ class Resources extends BaseController
             }
         }
 
-        // Pagination setup
         $totalFiltered = count($filtered);
-        $perPage = 10;
-        $currentPage = max(1, (int)($this->request->getGet('page') ?? 1));
-        $totalPages = max(1, (ceil($totalFiltered / $perPage)));
-        if ($currentPage > $totalPages) {
-            $currentPage = $totalPages;
-        }
-        $offset = ($currentPage - 1) * $perPage;
-        $paginatedResources = array_slice($filtered, $offset, $perPage);
-
-        if ($this->request->isAJAX()) {
-            return $this->response->setJSON([
-                'html' => view('partials/resource_rows', ['resources' => $paginatedResources]),
-                'pagination' => view('partials/resource_pagination', [
-                    'currentPage' => $currentPage,
-                    'totalPages' => $totalPages,
-                    'roleFilter' => $roleFilter,
-                    'statusFilter' => $statusFilter,
-                    'search' => $search,
-                    'totalFiltered' => $totalFiltered,
-                    'offset' => $offset,
-                    'perPage' => $perPage
-                ])
-            ]);
-        }
 
         return view('resource', [
-            'resources'       => $paginatedResources,
+            'resources'       => $resources,
             'departments'     => $departments,
             'roleFilter'      => $roleFilter,
             'statusFilter'    => $statusFilter,
             'search'          => $search,
-            'currentPage'     => $currentPage,
-            'totalPages'      => $totalPages,
             'totalFiltered'   => $totalFiltered,
-            'offset'          => $offset,
-            'perPage'         => $perPage,
             'totalCount'      => $totalCount,
             'empCount'        => $empCount,
             'outCount'        => $outCount,
@@ -121,6 +93,7 @@ class Resources extends BaseController
 
     public function map()
     {
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
         $db = \Config\Database::connect();
         
         // Fetch all projects
@@ -189,6 +162,8 @@ class Resources extends BaseController
             'manager'     => $manager,
         ]);
 
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
+
         return redirect()->to('/resource')->with('success', 'Resource created successfully.');
     }
 
@@ -229,6 +204,8 @@ class Resources extends BaseController
             'manager'     => $manager,
         ]);
 
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
+
         return redirect()->to('/resource')->with('success', 'Resource updated successfully.');
     }
 
@@ -248,6 +225,160 @@ class Resources extends BaseController
 
         $resourceModel->delete($id);
 
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
+
         return redirect()->to('/resource')->with('success', 'Resource deleted successfully.');
+    }
+
+    public function memberDetail($id)
+    {
+        \App\Controllers\Projects::recalculateAllResourceUtilizations();
+        
+        $resourceModel = new ResourceModel();
+        $member = $resourceModel->find($id);
+
+        if (!$member) {
+            return redirect()->to('/resource')->with('error', 'Resource not found.');
+        }
+
+        $db = \Config\Database::connect();
+        
+        // Target member initials
+        $initials = '';
+        $names = explode(' ', $member['name']);
+        foreach ($names as $n) {
+            $initials .= strtoupper(substr($n, 0, 1));
+        }
+        $member['initials'] = substr($initials, 0, 2);
+        
+        // Parse skills
+        $member['skills'] = array_filter(explode(',', $member['skills']));
+
+        // Get projects assigned to target member
+        $projects = $db->table('projects p')
+            ->select('p.*')
+            ->join('resource_projects rp', 'p.id = rp.project_id')
+            ->where('rp.resource_id', $id)
+            ->get()
+            ->getResultArray();
+
+        // Get subtasks/tasks assigned to this resource
+        $subtasks = $db->table('project_phase_subtasks s')
+            ->select('s.*, ph.name as phase_name, p.name as project_name, p.code as project_code, p.id as project_id')
+            ->join('project_phases ph', 's.phase_id = ph.id')
+            ->join('projects p', 'ph.project_id = p.id')
+            ->where('s.resource_id', $id)
+            ->orderBy('s.start', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Get collaborators/peers assigned to same projects (excluding target member)
+        $collaborators = [];
+        if (!empty($projects)) {
+            $projectIds = array_column($projects, 'id');
+            
+            $collaborators = $db->table('resources r')
+                ->select('r.*, rp.project_id')
+                ->join('resource_projects rp', 'r.id = rp.resource_id')
+                ->whereIn('rp.project_id', $projectIds)
+                ->where('r.id !=', $id)
+                ->get()
+                ->getResultArray();
+        }
+
+        // Map projects coordinates for radial layout
+        // Center: (450, 300)
+        $cx = 450;
+        $cy = 300;
+        $rInner = 150;
+        $rOuter = 280;
+        
+        $projCoords = [];
+        $numProjects = count($projects);
+        foreach ($projects as $idx => $p) {
+            $angle = $idx * (2 * M_PI / max(1, $numProjects));
+            $x = $cx + $rInner * cos($angle);
+            $y = $cy + $rInner * sin($angle);
+            $projCoords[$p['id']] = ['x' => $x, 'y' => $y];
+        }
+
+        // Group collaborators to avoid multiple circles for the same person
+        $collabGroups = [];
+        foreach ($collaborators as $c) {
+            $collabGroups[$c['id']]['info'] = $c;
+            $collabGroups[$c['id']]['projects'][] = $c['project_id'];
+        }
+        
+        $collabCoords = [];
+        $numCollabs = count($collabGroups);
+        $idx = 0;
+        foreach ($collabGroups as $cid => $cData) {
+            $angle = $idx * (2 * M_PI / max(1, $numCollabs));
+            $x = $cx + $rOuter * cos($angle);
+            $y = $cy + $rOuter * sin($angle);
+            $collabCoords[$cid] = ['x' => $x, 'y' => $y];
+            
+            $collabInfo = $cData['info'];
+            $cInitials = '';
+            $cNames = explode(' ', $collabInfo['name']);
+            foreach ($cNames as $cn) {
+                $cInitials .= strtoupper(substr($cn, 0, 1));
+            }
+            $collabInfo['initials'] = substr($cInitials, 0, 2);
+            $collabGroups[$cid]['info'] = $collabInfo;
+            
+            $idx++;
+        }
+
+        // Links: from target (center) to project, and from project to collaborator
+        $links = [];
+        $centerId = 'member_' . $id;
+
+        foreach ($projCoords as $pid => $coord) {
+            $links[] = [
+                'from_id' => $centerId,
+                'from_x' => $cx,
+                'from_y' => $cy,
+                'to_id' => 'proj_' . $pid,
+                'to_x' => $coord['x'],
+                'to_y' => $coord['y'],
+                'class' => 'link-member-proj',
+                'data_project' => $pid,
+                'data_resource' => ''
+            ];
+        }
+
+        foreach ($collabGroups as $cid => $cData) {
+            $coord = $collabCoords[$cid];
+            foreach ($cData['projects'] as $pid) {
+                if (isset($projCoords[$pid])) {
+                    $links[] = [
+                        'from_id' => 'proj_' . $pid,
+                        'from_x' => $projCoords[$pid]['x'],
+                        'from_y' => $projCoords[$pid]['y'],
+                        'to_id' => 'collab_' . $cid,
+                        'to_x' => $coord['x'],
+                        'to_y' => $coord['y'],
+                        'class' => 'link-proj-collab',
+                        'data_project' => $pid,
+                        'data_resource' => $cid
+                    ];
+                }
+            }
+        }
+
+        return view('member_detail', [
+            'member'        => $member,
+            'projects'      => $projects,
+            'subtasks'      => $subtasks,
+            'collabGroups'  => $collabGroups,
+            'projCoords'    => $projCoords,
+            'collabCoords'  => $collabCoords,
+            'links'         => $links,
+            'cx'            => $cx,
+            'cy'            => $cy,
+            'title'         => $member['name'] . ' // Resource // PMO',
+            'currentPath'   => '/resource'
+        ]);
     }
 }

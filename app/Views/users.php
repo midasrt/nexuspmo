@@ -2,74 +2,74 @@
 
 <?= $this->section('content') ?>
 
-<div class="min-h-screen p-6 md:p-10">
-    <div class="max-w-7xl mx-auto">
-        
-        <!-- Header -->
-        <div class="flex items-start justify-between gap-4 flex-wrap">
+<div class="min-h-screen pb-24">
+    <!-- Header -->
+    <header class="border-b border-ink/15 py-6 no-print mb-8 cascade-in" style="animation-delay: 0ms;">
+        <div class="w-full px-8 lg:px-14 flex items-center justify-between gap-4">
             <div>
-                <div class="mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                    PMO // Admin Module
-                </div>
-                <h1 class="mono text-4xl font-black uppercase tracking-tight mt-2">User Management</h1>
-                <p class="mt-2 text-sm text-muted-foreground max-w-prose">
-                    CRUD system to manage user accounts, define roles (Admin vs. Viewer), and control workspace mutation rights.
-                </p>
+                <span class="eyebrow">PMO // Admin Module</span>
+                <h1 class="font-display text-2xl md:text-3xl font-black uppercase mt-1 tracking-tight">User Management</h1>
             </div>
             <div>
-                <button onclick="openCreateModal()" class="brutal-border bg-foreground text-background px-4 py-3 mono text-xs uppercase tracking-widest font-black brutal-shadow brutal-hover">
-                    + New User
+                <button onclick="openCreateModal()" class="rounded-full border border-ink/20 bg-ink text-paper hover:bg-ink/90 px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    New User
                 </button>
             </div>
         </div>
+    </header>
 
+    <div class="w-full px-8 lg:px-14 cascade-in" style="animation-delay: 50ms;">
         <!-- Users Table -->
-        <div class="mt-8 brutal-border bg-card brutal-shadow overflow-x-auto">
+        <div class="rounded-2xl border border-ink/15 bg-card/70 backdrop-blur overflow-hidden shadow-sm">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-foreground bg-secondary/50 mono text-xs uppercase tracking-widest font-black">
-                        <th class="p-4 border-r border-foreground">Name</th>
-                        <th class="p-4 border-r border-foreground">Email</th>
-                        <th class="p-4 border-r border-foreground">Role</th>
-                        <th class="p-4 border-r border-foreground text-center">Created At</th>
-                        <th class="p-4 text-right">Actions</th>
+                    <tr class="border-b border-ink/15 bg-background/50">
+                        <th class="px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">Name</th>
+                        <th class="px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">Email</th>
+                        <th class="px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold">Role</th>
+                        <th class="px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold text-center">Created At</th>
+                        <th class="px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground font-semibold text-right w-28">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="mono text-xs">
+                <tbody>
                     <?php if (empty($users)): ?>
                         <tr>
-                            <td colspan="5" class="p-8 text-center text-muted-foreground uppercase tracking-widest">No users found.</td>
+                            <td colspan="5" class="px-4 py-6 text-center text-xs text-muted-foreground uppercase tracking-widest font-mono">No users found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users as $u): ?>
-                            <tr class="border-b border-foreground hover:bg-muted/30">
-                                <td class="p-4 border-r border-foreground font-bold"><?= esc($u['name']) ?></td>
-                                <td class="p-4 border-r border-foreground"><?= esc($u['email']) ?></td>
-                                <td class="p-4 border-r border-foreground">
-                                    <span class="inline-block px-2 py-1 border border-foreground font-black uppercase tracking-widest <?= $u['role'] === 'admin' ? 'bg-status-ontrack text-foreground' : 'bg-secondary text-foreground' ?>">
+                            <tr class="border-b border-ink/10 hover:bg-background/20 transition-colors">
+                                <td class="px-4 py-4.5 align-middle text-sm font-bold uppercase text-ink"><?= esc($u['name']) ?></td>
+                                <td class="px-4 py-4.5 align-middle text-sm text-ink/80"><?= esc($u['email']) ?></td>
+                                <td class="px-4 py-4.5 align-middle">
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider <?= $u['role'] === 'admin' ? 'bg-status-ontrack text-white shadow-sm' : 'bg-secondary text-ink border border-ink/10' ?>">
                                         <?= esc($u['role']) ?>
                                     </span>
                                 </td>
-                                <td class="p-4 border-r border-foreground text-center">
+                                <td class="px-4 py-4.5 align-middle text-center text-xs font-mono text-muted-foreground">
                                     <?= date('d-m-Y H:i', strtotime($u['created_at'])) ?>
                                 </td>
-                                <td class="p-4 text-right flex justify-end gap-2">
-                                    <button 
-                                        onclick='openEditModal(<?= json_encode($u) ?>)'
-                                        class="brutal-border bg-card hover:bg-secondary px-2.5 py-1.5 mono text-[10px] uppercase font-black tracking-widest brutal-hover"
-                                    >
-                                        Edit
-                                    </button>
-                                    <?php if (session()->get('user_id') != $u['id']): ?>
-                                        <form action="<?= base_url('users/delete/' . $u['id']) ?>" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" class="inline">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="brutal-border bg-destructive text-destructive-foreground hover:opacity-95 px-2.5 py-1.5 mono text-[10px] uppercase font-black tracking-widest brutal-hover">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    <?php else: ?>
-                                        <span class="mono text-[10px] text-muted-foreground uppercase tracking-widest py-1.5 px-2.5 select-none">(You)</span>
-                                    <?php endif; ?>
+                                <td class="px-4 py-4.5 align-middle text-right">
+                                    <div class="flex items-center justify-end gap-3">
+                                        <button 
+                                            onclick='openEditModal(<?= json_encode($u) ?>)'
+                                            class="text-ink/60 hover:text-ink"
+                                            title="Edit"
+                                        >
+                                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        </button>
+                                        <?php if (session()->get('user_id') != $u['id']): ?>
+                                            <form action="<?= base_url('users/delete/' . $u['id']) ?>" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" class="inline m-0">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="text-destructive hover:opacity-80 flex items-center" title="Delete">
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <span class="text-[10px] font-mono text-muted-foreground uppercase tracking-widest select-none">(You)</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -81,105 +81,85 @@
 </div>
 
 <!-- Create Modal -->
-<div id="create-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-card brutal-border brutal-shadow w-full max-w-md p-6 flex flex-col gap-4">
-        <div class="flex items-center justify-between border-b border-foreground pb-2">
-            <h3 class="mono text-sm font-black uppercase">Create New User</h3>
-            <button onclick="closeCreateModal()" class="font-black hover:opacity-75">✕</button>
+<div id="create-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-card rounded-2xl border border-ink/15 max-w-md w-full p-0 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="border-b border-ink/15 bg-ink text-paper px-6 py-4 flex items-center justify-between shrink-0">
+            <h3 class="font-display text-sm font-bold uppercase tracking-wide">Create New User</h3>
+            <button onclick="closeCreateModal()" class="text-paper hover:opacity-75">✕</button>
         </div>
-        <form action="<?= base_url('users/create') ?>" method="POST" class="flex flex-col gap-4">
+        <form action="<?= base_url('users/create') ?>" method="POST" class="overflow-y-auto flex-1 p-6 space-y-4 text-left font-mono">
             <?= csrf_field() ?>
-            <div class="flex flex-col gap-1.5">
-                <label for="create_name" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Name</label>
-                <input type="text" name="name" id="create_name" required class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="create_name" class="text-[10px] uppercase text-muted-foreground">Name</label>
+                <input type="text" name="name" id="create_name" required placeholder="User's Name" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="create_email" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Email Address</label>
-                <input type="email" name="email" id="create_email" required class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="create_email" class="text-[10px] uppercase text-muted-foreground">Email Address</label>
+                <input type="email" name="email" id="create_email" required placeholder="email@gtech.com" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="create_password" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Password</label>
-                <input type="password" name="password" id="create_password" required class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="create_password" class="text-[10px] uppercase text-muted-foreground">Password</label>
+                <input type="password" name="password" id="create_password" required placeholder="Password" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="create_role" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Role</label>
-                <select name="role" id="create_role" class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="create_role" class="text-[10px] uppercase text-muted-foreground">Role</label>
+                <select name="role" id="create_role" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none uppercase">
                     <option value="viewer">Viewer (Read-Only)</option>
                     <option value="admin">Admin (Full Control)</option>
                 </select>
             </div>
 
-            <button type="submit" class="brutal-border bg-foreground text-background py-2.5 mono text-xs uppercase tracking-widest font-black brutal-hover mt-2">
-                Create User
-            </button>
+            <div class="border-t border-ink/15 pt-4 flex justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeCreateModal()" class="rounded-full border border-ink/20 bg-background hover:bg-secondary px-4 py-2 text-xs font-mono uppercase tracking-widest">Cancel</button>
+                <button type="submit" class="rounded-full bg-ink text-paper px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold">Create User</button>
+            </div>
         </form>
     </div>
 </div>
 
 <!-- Edit Modal -->
-<div id="edit-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-card brutal-border brutal-shadow w-full max-w-md p-6 flex flex-col gap-4">
-        <div class="flex items-center justify-between border-b border-foreground pb-2">
-            <h3 class="mono text-sm font-black uppercase">Edit User</h3>
-            <button onclick="closeEditModal()" class="font-black hover:opacity-75">✕</button>
+<div id="edit-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-card rounded-2xl border border-ink/15 max-w-md w-full p-0 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="border-b border-ink/15 bg-ink text-paper px-6 py-4 flex items-center justify-between shrink-0">
+            <h3 class="font-display text-sm font-bold uppercase tracking-wide">Edit User</h3>
+            <button onclick="closeEditModal()" class="text-paper hover:opacity-75">✕</button>
         </div>
-        <form id="edit-form" action="" method="POST" class="flex flex-col gap-4">
+        <form id="edit-form" action="" method="POST" class="overflow-y-auto flex-1 p-6 space-y-4 text-left font-mono">
             <?= csrf_field() ?>
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_name" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Name</label>
-                <input type="text" name="name" id="edit_name" required class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="edit_name" class="text-[10px] uppercase text-muted-foreground">Name</label>
+                <input type="text" name="name" id="edit_name" required class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_email" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Email Address</label>
-                <input type="email" name="email" id="edit_email" required class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="edit_email" class="text-[10px] uppercase text-muted-foreground">Email Address</label>
+                <input type="email" name="email" id="edit_email" required class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_password" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">New Password (Optional)</label>
-                <input type="password" name="password" id="edit_password" placeholder="Leave blank to keep current password" class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="edit_password" class="text-[10px] uppercase text-muted-foreground">New Password (Optional)</label>
+                <input type="password" name="password" id="edit_password" placeholder="Leave blank to keep current" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none">
             </div>
 
-            <div class="flex flex-col gap-1.5">
-                <label for="edit_role" class="mono text-[10px] uppercase tracking-widest font-black text-foreground">Role</label>
-                <select name="role" id="edit_role" class="w-full bg-background border border-foreground px-3 py-2 mono text-xs brutal-border">
+            <div class="flex flex-col gap-1">
+                <label for="edit_role" class="text-[10px] uppercase text-muted-foreground">Role</label>
+                <select name="role" id="edit_role" class="rounded-xl border border-ink/20 bg-background px-3 py-2 text-sm focus:outline-none uppercase">
                     <option value="viewer">Viewer (Read-Only)</option>
                     <option value="admin">Admin (Full Control)</option>
                 </select>
             </div>
 
-            <button type="submit" class="brutal-border bg-foreground text-background py-2.5 mono text-xs uppercase tracking-widest font-black brutal-hover mt-2">
-                Save Changes
-            </button>
+            <div class="border-t border-ink/15 pt-4 flex justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeEditModal()" class="rounded-full border border-ink/20 bg-background hover:bg-secondary px-4 py-2 text-xs font-mono uppercase tracking-widest">Cancel</button>
+                <button type="submit" class="rounded-full bg-ink text-paper px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold">Save Changes</button>
+            </div>
         </form>
     </div>
 </div>
 
-<script>
-    function openCreateModal() {
-        document.getElementById('create-modal').classList.remove('hidden');
-    }
-
-    function closeCreateModal() {
-        document.getElementById('create-modal').classList.add('hidden');
-    }
-
-    function openEditModal(user) {
-        document.getElementById('edit_name').value = user.name;
-        document.getElementById('edit_email').value = user.email;
-        document.getElementById('edit_role').value = user.role;
-        document.getElementById('edit_password').value = '';
-        
-        document.getElementById('edit-form').action = '<?= base_url('users/update') ?>/' + user.id;
-        document.getElementById('edit-modal').classList.remove('hidden');
-    }
-
-    function closeEditModal() {
-        document.getElementById('edit-modal').classList.add('hidden');
-    }
-</script>
+<script src="<?= base_url('js/users.js') ?>"></script>
 
 <?= $this->endSection() ?>

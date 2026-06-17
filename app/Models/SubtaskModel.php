@@ -11,6 +11,6 @@ class SubtaskModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $allowedFields    = [
-        'phase_id', 'name', 'description', 'start', 'end', 'status', 'sequence'
+        'phase_id', 'name', 'description', 'start', 'end', 'status', 'sequence', 'resource_id', 'man_days', 'task_hours'
     ];
 }

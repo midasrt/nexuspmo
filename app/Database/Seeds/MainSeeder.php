@@ -10,544 +10,2306 @@ class MainSeeder extends Seeder
     {
         $db = $this->db;
 
-        // --- 0. STATUS DEFINITIONS ---
-        $statusDefinitions = [
-            ['status' => 'on-track', 'label' => 'ON TRACK', 'criteria' => 'Tracking to plan. No critical risks open. Velocity ≥ 90% of baseline.'],
-            ['status' => 'at-risk', 'label' => 'AT RISK', 'criteria' => 'Identifiable threat to scope/time/cost. Mitigation in flight. Slip < 2 weeks.'],
-            ['status' => 'blocked', 'label' => 'BLOCKED', 'criteria' => 'Progress halted pending external dependency, approval, or unresolved issue.'],
-            ['status' => 'delayed', 'label' => 'DELAYED', 'criteria' => 'Confirmed slip ≥ 2 weeks. Re-baseline required and communicated.'],
-            ['status' => 'backlog', 'label' => 'BACKLOG', 'criteria' => 'Approved but not yet started. Awaiting scheduled start date or resourcing.'],
-        ];
-        $db->table('status_definitions')->emptyTable();
-        $db->table('status_definitions')->insertBatch($statusDefinitions);
-
-        // --- 1. SQUADS ---
-        $squads = [
-            ['name' => 'Mapclub', 'mission' => 'Location-based loyalty for retail.', 'lead' => 'K. Tanaka'],
-            ['name' => 'Loyalty', 'mission' => 'Points engine + redemption flows.', 'lead' => 'P. Schwartz'],
-            ['name' => 'O2O', 'mission' => 'Online-to-offline conversion stack.', 'lead' => 'H. Larsen'],
-            ['name' => 'Digital Flagship', 'mission' => 'Brand digital flagship properties.', 'lead' => 'M. Reyes'],
-            ['name' => 'Custom Web', 'mission' => 'Bespoke client web builds.', 'lead' => 'K. Tanaka'],
-            ['name' => 'MaaS', 'mission' => 'Mobility-as-a-Service platform.', 'lead' => 'A. Kumar'],
-            ['name' => 'CRM', 'mission' => 'Unified CRM + segmentation.', 'lead' => 'S. Park'],
-            ['name' => 'Speedwork', 'mission' => 'Rapid-delivery internal tools.', 'lead' => 'T. Adeyemi'],
-            ['name' => 'Mekaniq', 'mission' => 'Workshop & service ops platform.', 'lead' => 'T. Adeyemi'],
-            ['name' => 'Pandora (SBUX)', 'mission' => 'Coffee chain ordering & rewards.', 'lead' => 'R. Müller'],
-        ];
-        $db->table('squads')->emptyTable();
-        $db->table('squads')->insertBatch($squads);
-
-        // --- 2. RESOURCES ---
-        $resources = [
+        // --- ORG_STRUCTURES ---
+        $db->table('org_structures')->emptyTable();
+        $data_org_structures = [
             [
-                'id' => 1,
-                'name' => 'M. Reyes',
+                'id' => '1',
+                'name' => 'BA/QA/UX',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '2',
+                'name' => 'Identity',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '3',
+                'name' => 'Data',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '4',
+                'name' => 'Mobile',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '5',
+                'name' => 'Finance Tech',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '6',
+                'name' => 'SRE',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '7',
+                'name' => 'Product',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '8',
+                'name' => 'Security',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '9',
+                'name' => 'Platform',
+                'description' => 'Automatically imported from existing resource records.',
+            ],
+            [
+                'id' => '10',
+                'name' => 'Mobile Dev',
+                'description' => 'Mobile Development team',
+            ],
+        ];
+        $db->table('org_structures')->insertBatch($data_org_structures);
+
+        // --- PROJECT_ACTION_ITEMS ---
+        $db->table('project_action_items')->emptyTable();
+        $data_project_action_items = [
+            [
+                'id' => 'action_6a279256aca3f5.30899542',
+                'project_id' => 'prj-001',
+                'title' => 'Revise/Adjust Timeline',
+                'owner' => 'Dimas',
+                'due' => '2026-06-02',
+                'done' => '1',
+                'resolved_date' => '2026-06-09',
+            ],
+            [
+                'id' => 'action_6a27ce79b670d5.96117555',
+                'project_id' => 'prj-001',
+                'title' => 'Story enhancement',
+                'owner' => 'Dimas',
+                'due' => '2026-06-09',
+                'done' => '1',
+                'resolved_date' => '2026-06-09',
+            ],
+            [
+                'id' => 'action_6a27e15b629254.76743659',
+                'project_id' => 'prj-001',
+                'title' => 'Action to Action',
+                'owner' => 'Dimas',
+                'due' => '2026-06-26',
+                'done' => '0',
+                'resolved_date' => null,
+            ],
+            [
+                'id' => 'action_6a27e312e844d7.12115349',
+                'project_id' => 'prj-001',
+                'title' => 'Action +3',
+                'owner' => 'Dimas',
+                'due' => '2026-06-11',
+                'done' => '0',
+                'resolved_date' => null,
+            ],
+        ];
+        $db->table('project_action_items')->insertBatch($data_project_action_items);
+
+        // --- PROJECT_DEPENDENCIES ---
+        $db->table('project_dependencies')->emptyTable();
+        // No data for project_dependencies
+
+        // --- PROJECT_DETAILED_HISTORY ---
+        $db->table('project_detailed_history')->emptyTable();
+        $data_project_detailed_history = [
+            [
+                'id' => '1',
+                'project_id' => 'prj-001',
+                'activity' => 'Added Action Item: \'Story enhancement\' (Due: 2026-06-09)',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":72,\"phases_count\":3,\"subtasks_count\":9,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:27:37',
+            ],
+            [
+                'id' => '2',
+                'project_id' => 'prj-001',
+                'activity' => 'Action Item \'Story enhancement\' marked as completed on 2026-06-09',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":72,\"phases_count\":3,\"subtasks_count\":9,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:27:40',
+            ],
+            [
+                'id' => '3',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Added: \'Shopping Cart\' (Status: BACKLOG)',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":72,\"phases_count\":3,\"subtasks_count\":9,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":72,\"phases_count\":4,\"subtasks_count\":9,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:28:32',
+            ],
+            [
+                'id' => '4',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Flash sale\' to Phase ID 66',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":9,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":10,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:28:58',
+            ],
+            [
+                'id' => '5',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Out of stock\' to Phase ID 66',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":10,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":11,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:29:23',
+            ],
+            [
+                'id' => '6',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Adjust Product list\' to Phase \'Shopping Cart\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":11,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":12,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:32:06',
+            ],
+            [
+                'id' => '7',
+                'project_id' => 'prj-001',
+                'activity' => 'Action Item \'Revise/Adjust Timeline\' marked as pending',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":12,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:36:12',
+            ],
+            [
+                'id' => '8',
+                'project_id' => 'prj-001',
+                'activity' => 'Action Item \'Revise/Adjust Timeline\' marked as completed on 2026-06-09',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":12,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:36:31',
+            ],
+            [
+                'id' => '9',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Some task\' to Phase \'General Web\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":12,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":54,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 08:41:50',
+            ],
+            [
+                'id' => '10',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Unassigned: Luqman Isyraqi',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":3}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:28:56',
+            ],
+            [
+                'id' => '11',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Unassigned: Soraya',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":2}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:29:01',
+            ],
+            [
+                'id' => '12',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Imam Kriswanto',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":3}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:28',
+            ],
+            [
+                'id' => '13',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Fatha Ghani Al Rauf',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":4}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:32',
+            ],
+            [
+                'id' => '14',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Nanang Adi Utomo',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":5}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:39',
+            ],
+            [
+                'id' => '15',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Reza Wahyu',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":6}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:44',
+            ],
+            [
+                'id' => '16',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Heru Hartanto',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":7}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:52',
+            ],
+            [
+                'id' => '17',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Gigin',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":8}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:36:58',
+            ],
+            [
+                'id' => '18',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Dadah',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":9}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:37:07',
+            ],
+            [
+                'id' => '19',
+                'project_id' => 'prj-001',
+                'activity' => 'Resource Assigned: Septian',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:37:13',
+            ],
+            [
+                'id' => '20',
+                'project_id' => 'prj-001',
+                'activity' => 'Owner updated to \'Dimas H\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":58,\"phases_count\":4,\"subtasks_count\":13,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":25,\"phases_count\":4,\"subtasks_count\":0,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:41:08',
+            ],
+            [
+                'id' => '21',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Task A\' to Phase \'General Web\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":25,\"phases_count\":4,\"subtasks_count\":0,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":25,\"phases_count\":4,\"subtasks_count\":1,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:44:48',
+            ],
+            [
+                'id' => '22',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Task B\' to Phase \'General Web\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":50,\"phases_count\":4,\"subtasks_count\":1,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":50,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:45:02',
+            ],
+            [
+                'id' => '23',
+                'project_id' => 'prj-001',
+                'activity' => 'Owner updated to \'Afwan WH\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":2,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:45:43',
+            ],
+            [
+                'id' => '24',
+                'project_id' => 'prj-001',
+                'activity' => 'Added Action Item: \'Action to Action\' (Due: 2026-06-26)',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":3,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:48:11',
+            ],
+            [
+                'id' => '25',
+                'project_id' => 'prj-001',
+                'activity' => 'Owner updated to \'Dimas H\'; Progress updated to %',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":3,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":3,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:48:30',
+            ],
+            [
+                'id' => '26',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Task CH A\' to Phase \'Checkout Page\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":2,\"action_items_count\":3,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":37,\"phases_count\":4,\"subtasks_count\":3,\"action_items_count\":3,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:48:53',
+            ],
+            [
+                'id' => '27',
+                'project_id' => 'prj-001',
+                'activity' => 'Added Risk/Issue: \'Test Low Risk Entry\' (Severity: LOW)',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":62,\"phases_count\":4,\"subtasks_count\":3,\"action_items_count\":3,\"risks_count\":1,\"escalations_count\":0,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:51:33',
+            ],
+            [
+                'id' => '28',
+                'project_id' => 'prj-001',
+                'activity' => 'Added Escalation Level 1 to The King',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":62,\"phases_count\":4,\"subtasks_count\":3,\"action_items_count\":3,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:52:32',
+            ],
+            [
+                'id' => '29',
+                'project_id' => 'prj-001',
+                'activity' => 'Added Action Item: \'Action +3\' (Due: 2026-06-11)',
+                'old_state' => '{\"status\":\"backlog\",\"progress\":0,\"phases_count\":0,\"subtasks_count\":0,\"action_items_count\":0,\"risks_count\":0,\"escalations_count\":0,\"resources_count\":0}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":62,\"phases_count\":4,\"subtasks_count\":3,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-09',
+                'created_at' => '2026-06-09 09:55:31',
+            ],
+            [
+                'id' => '30',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Added: \'PDP\' (Status: ON-TRACK)',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":62,\"phases_count\":4,\"subtasks_count\":3,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":62,\"phases_count\":5,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 04:04:41',
+            ],
+            [
+                'id' => '31',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Added via Echo: \'Popup\' (Status: ON-TRACK)',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":50,\"phases_count\":5,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":50,\"phases_count\":6,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:07:24',
+            ],
+            [
+                'id' => '32',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Status Updated via Echo: \'Popup\' to BLOCKED',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:09:55',
+            ],
+            [
+                'id' => '33',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added via Echo: \'Pop A\' to Phase \'Popup\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":5,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":6,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:13:13',
+            ],
+            [
+                'id' => '34',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added via Echo: \'Pop B\' to Phase \'Popup\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":6,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:13:36',
+            ],
+            [
+                'id' => '35',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Added via Echo: \'Search\' (Status: ON-TRACK)',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":7,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:19:54',
+            ],
+            [
+                'id' => '36',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase Added via Echo: \'Others\' (Status: ON-TRACK)',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":6,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":41,\"phases_count\":8,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:19:54',
+            ],
+            [
+                'id' => '37',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Oothjers A\' to Phase \'Others\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":7,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":8,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 07:34:49',
+            ],
+            [
+                'id' => '38',
+                'project_id' => 'prj-001',
+                'activity' => 'Phase \'Popup\' updated',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":8,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":8,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-10',
+                'created_at' => '2026-06-10 09:11:06',
+            ],
+            [
+                'id' => '39',
+                'project_id' => 'prj-001',
+                'activity' => 'Subtask Added: \'Task C\' to Phase \'General Web\'',
+                'old_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":8,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'new_state' => '{\"status\":\"on-track\",\"progress\":31,\"phases_count\":8,\"subtasks_count\":9,\"action_items_count\":4,\"risks_count\":1,\"escalations_count\":1,\"resources_count\":10}',
+                'date' => '2026-06-11',
+                'created_at' => '2026-06-11 03:17:19',
+            ],
+        ];
+        $db->table('project_detailed_history')->insertBatch($data_project_detailed_history);
+
+        // --- PROJECT_DOCUMENTS ---
+        $db->table('project_documents')->emptyTable();
+        // No data for project_documents
+
+        // --- PROJECT_ESCALATIONS ---
+        $db->table('project_escalations')->emptyTable();
+        $data_project_escalations = [
+            [
+                'id' => '11',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'level' => 1,
+                'note' => 'All hail the king',
+                'to_recipient' => 'The King',
+                'status' => 'active',
+                'reason' => null,
+            ],
+        ];
+        $db->table('project_escalations')->insertBatch($data_project_escalations);
+
+        // --- PROJECT_NARRATIVE_HISTORY ---
+        $db->table('project_narrative_history')->emptyTable();
+        $data_project_narrative_history = [
+            [
+                'id' => '1',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'With concerted effort, the workspace evolved, and the project climbed to 72% progress, validating the dedication of its architects.',
+                'created_at' => '2026-06-09 08:27:37',
+            ],
+            [
+                'id' => '2',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A wave of execution carried the project forward, lifting its completion metrics to 72% as the team secured key milestones.',
+                'created_at' => '2026-06-09 08:27:40',
+            ],
+            [
+                'id' => '3',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A new chapter was added to the roadmap: a new phase was introduced, expanding the project\'s ultimate mission.',
+                'created_at' => '2026-06-09 08:28:32',
+            ],
+            [
+                'id' => '4',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A finer level of planning took root as a new subtask was registered, delineating a critical step in the execution.',
+                'created_at' => '2026-06-09 08:28:58',
+            ],
+            [
+                'id' => '5',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A finer level of planning took root as a new subtask was registered, delineating a critical step in the execution.',
+                'created_at' => '2026-06-09 08:29:23',
+            ],
+            [
+                'id' => '6',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A finer level of planning took root as a new subtask was registered, delineating a critical step in the execution.',
+                'created_at' => '2026-06-09 08:32:06',
+            ],
+            [
+                'id' => '7',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A wave of execution carried the project forward, lifting its completion metrics to 54% as the team secured key milestones.',
+                'created_at' => '2026-06-09 08:36:12',
+            ],
+            [
+                'id' => '8',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'With concerted effort, the workspace evolved, and the project climbed to 54% progress, validating the dedication of its architects.',
+                'created_at' => '2026-06-09 08:36:31',
+            ],
+            [
+                'id' => '9',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 13. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-09 08:41:50',
+            ],
+            [
+                'id' => '10',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Overall completion updated to 58% (up 58pp), confirming on-track execution against the project baseline.',
+                'created_at' => '2026-06-09 09:28:56',
+            ],
+            [
+                'id' => '11',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Overall completion updated to 58% (up 58pp), confirming on-track execution against the project baseline.',
+                'created_at' => '2026-06-09 09:29:01',
+            ],
+            [
+                'id' => '12',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Progress metric increased by 58 percentage points to 58%, consistent with the current delivery plan.',
+                'created_at' => '2026-06-09 09:36:28',
+            ],
+            [
+                'id' => '13',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:36:32',
+            ],
+            [
+                'id' => '14',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:36:39',
+            ],
+            [
+                'id' => '15',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Overall completion updated to 58% (up 58pp), confirming on-track execution against the project baseline.',
+                'created_at' => '2026-06-09 09:36:44',
+            ],
+            [
+                'id' => '16',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:36:52',
+            ],
+            [
+                'id' => '17',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:36:58',
+            ],
+            [
+                'id' => '18',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:37:07',
+            ],
+            [
+                'id' => '19',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 58%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:37:13',
+            ],
+            [
+                'id' => '20',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress was recalibrated from 58% to 25% following a scope or task adjustment.',
+                'created_at' => '2026-06-09 09:41:08',
+            ],
+            [
+                'id' => '21',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 1. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-09 09:44:48',
+            ],
+            [
+                'id' => '22',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 2. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-09 09:45:02',
+            ],
+            [
+                'id' => '23',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project activity recorded: Owner updated to \'Afwan WH\'.',
+                'created_at' => '2026-06-09 09:45:43',
+            ],
+            [
+                'id' => '24',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project progress advanced from 0% to 37%, reflecting completed deliverables and milestone achievement.',
+                'created_at' => '2026-06-09 09:48:11',
+            ],
+            [
+                'id' => '25',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Project activity recorded: Owner updated to \'Dimas H\'; Progress updated to %.',
+                'created_at' => '2026-06-09 09:48:30',
+            ],
+            [
+                'id' => '26',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 3. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-09 09:48:53',
+            ],
+            [
+                'id' => '27',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Progress metric increased by 62 percentage points to 62%, consistent with the current delivery plan.',
+                'created_at' => '2026-06-09 09:51:33',
+            ],
+            [
+                'id' => '28',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Progress metric increased by 62 percentage points to 62%, consistent with the current delivery plan.',
+                'created_at' => '2026-06-09 09:52:32',
+            ],
+            [
+                'id' => '29',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'sentence' => 'Progress metric increased by 62 percentage points to 62%, consistent with the current delivery plan.',
+                'created_at' => '2026-06-09 09:55:31',
+            ],
+            [
+                'id' => '30',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new project phase has been added to the work breakdown structure, expanding the delivery scope from 4 to 5 phases. The project plan and timeline should be reviewed accordingly.',
+                'created_at' => '2026-06-10 04:04:41',
+            ],
+            [
+                'id' => '31',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new project phase has been added to the work breakdown structure, expanding the delivery scope from 5 to 6 phases. The project plan and timeline should be reviewed accordingly.',
+                'created_at' => '2026-06-10 07:07:24',
+            ],
+            [
+                'id' => '32',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'Project activity recorded: Phase Status Updated via Echo: \'Popup\' to BLOCKED.',
+                'created_at' => '2026-06-10 07:09:55',
+            ],
+            [
+                'id' => '33',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 6. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-10 07:13:13',
+            ],
+            [
+                'id' => '34',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 7. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-10 07:13:36',
+            ],
+            [
+                'id' => '35',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new project phase has been added to the work breakdown structure, expanding the delivery scope from 6 to 7 phases. The project plan and timeline should be reviewed accordingly.',
+                'created_at' => '2026-06-10 07:19:54',
+            ],
+            [
+                'id' => '36',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new project phase has been added to the work breakdown structure, expanding the delivery scope from 6 to 8 phases. The project plan and timeline should be reviewed accordingly.',
+                'created_at' => '2026-06-10 07:19:54',
+            ],
+            [
+                'id' => '37',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 8. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-10 07:34:49',
+            ],
+            [
+                'id' => '38',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'sentence' => 'Project activity recorded: Phase \'Popup\' updated.',
+                'created_at' => '2026-06-10 09:11:06',
+            ],
+            [
+                'id' => '39',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-11',
+                'sentence' => 'A new subtask has been added to the project, increasing the total task count to 9. The phase completion metrics have been updated to reflect this change.',
+                'created_at' => '2026-06-11 03:17:19',
+            ],
+        ];
+        $db->table('project_narrative_history')->insertBatch($data_project_narrative_history);
+
+        // --- PROJECT_PHASE_SUBTASKS ---
+        $db->table('project_phase_subtasks')->emptyTable();
+        $data_project_phase_subtasks = [
+            [
+                'id' => '17',
+                'phase_id' => '68',
+                'name' => 'Task A',
+                'description' => '',
+                'start' => '2026-03-15',
+                'end' => '2026-03-20',
+                'status' => 'completed',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '18',
+                'phase_id' => '68',
+                'name' => 'Task B',
+                'description' => '',
+                'start' => '2026-03-17',
+                'end' => '2026-03-25',
+                'status' => 'on-track',
+                'sequence' => '1',
+            ],
+            [
+                'id' => '19',
+                'phase_id' => '69',
+                'name' => 'Task CH A',
+                'description' => '',
+                'start' => '2026-04-01',
+                'end' => '2026-04-05',
+                'status' => 'completed',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '20',
+                'phase_id' => '71',
+                'name' => 'PDP A',
+                'description' => '',
+                'start' => '2026-05-01',
+                'end' => '2026-05-15',
+                'status' => 'on-track',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '21',
+                'phase_id' => '71',
+                'name' => 'PDP B',
+                'description' => '',
+                'start' => '2026-05-12',
+                'end' => '2026-05-20',
+                'status' => 'on-track',
+                'sequence' => '1',
+            ],
+            [
+                'id' => '22',
+                'phase_id' => '72',
+                'name' => 'Pop A',
+                'description' => '',
+                'start' => '2026-04-19',
+                'end' => '2026-04-23',
+                'status' => 'blocked',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '23',
+                'phase_id' => '72',
+                'name' => 'Pop B',
+                'description' => '',
+                'start' => '2026-04-22',
+                'end' => '2026-04-30',
+                'status' => 'blocked',
+                'sequence' => '1',
+            ],
+            [
+                'id' => '24',
+                'phase_id' => '74',
+                'name' => 'Oothjers A',
+                'description' => 'Others Subtask A',
+                'start' => '2026-04-01',
+                'end' => '2026-05-15',
+                'status' => 'sit',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '25',
+                'phase_id' => '68',
+                'name' => 'Task C',
+                'description' => '',
+                'start' => '2026-03-14',
+                'end' => '2026-03-18',
+                'status' => 'on-track',
+                'sequence' => '2',
+            ],
+        ];
+        $db->table('project_phase_subtasks')->insertBatch($data_project_phase_subtasks);
+
+        // --- PROJECT_PHASES ---
+        $db->table('project_phases')->emptyTable();
+        $data_project_phases = [
+            [
+                'id' => '67',
+                'project_id' => 'prj-001',
+                'name' => 'Third Party Integrations',
+                'description' => 'Trackers and marketing automations',
+                'start' => '2026-03-01',
+                'end' => '2026-03-24',
+                'status' => 'completed',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '68',
+                'project_id' => 'prj-001',
+                'name' => 'General Web',
+                'description' => 'General fixes for web delta',
+                'start' => '2026-03-14',
+                'end' => '2026-03-25',
+                'status' => 'delayed',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '69',
+                'project_id' => 'prj-001',
+                'name' => 'Checkout Page',
+                'description' => 'Checkout page reflow',
+                'start' => '2026-04-01',
+                'end' => '2026-04-05',
+                'status' => 'on-track',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '70',
+                'project_id' => 'prj-001',
+                'name' => 'Shopping Cart',
+                'description' => 'Shopping cart revamp',
+                'start' => '2026-04-27',
+                'end' => '2026-06-19',
+                'status' => 'backlog',
+                'sequence' => '0',
+            ],
+            [
+                'id' => '71',
+                'project_id' => 'prj-001',
+                'name' => 'PDP',
+                'description' => 'PDP Enhancement',
+                'start' => '2026-05-01',
+                'end' => '2026-05-20',
+                'status' => 'on-track',
+                'sequence' => '1',
+            ],
+            [
+                'id' => '72',
+                'project_id' => 'prj-001',
+                'name' => 'Popup',
+                'description' => 'Popup Enhancement',
+                'start' => '2026-04-19',
+                'end' => '2026-04-30',
+                'status' => 'blocked',
+                'sequence' => '2',
+            ],
+            [
+                'id' => '73',
+                'project_id' => 'prj-001',
+                'name' => 'Search',
+                'description' => '',
+                'start' => '2026-05-16',
+                'end' => '2026-05-22',
+                'status' => 'on-track',
+                'sequence' => '3',
+            ],
+            [
+                'id' => '74',
+                'project_id' => 'prj-001',
+                'name' => 'Others',
+                'description' => '',
+                'start' => '2026-04-01',
+                'end' => '2026-05-15',
+                'status' => 'on-track',
+                'sequence' => '4',
+            ],
+        ];
+        $db->table('project_phases')->insertBatch($data_project_phases);
+
+        // --- PROJECT_RISKS ---
+        $db->table('project_risks')->emptyTable();
+        $data_project_risks = [
+            [
+                'id' => 'risk_6a27e225413fd2.76755216',
+                'project_id' => 'prj-001',
+                'title' => 'Test Low Risk Entry',
+                'severity' => 'low',
+                'type' => 'risk',
+                'mitigation' => 'Voir la Voir',
+                'owner' => 'Dimas',
+                'status' => 'active',
+                'reason' => null,
+            ],
+        ];
+        $db->table('project_risks')->insertBatch($data_project_risks);
+
+        // --- PROJECT_STATUS_HISTORY ---
+        $db->table('project_status_history')->emptyTable();
+        $data_project_status_history = [
+            [
+                'id' => '61',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Created.',
+            ],
+            [
+                'id' => '62',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Insider\' to Phase ID 63',
+            ],
+            [
+                'id' => '63',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'UNBXD\' to Phase ID 63',
+            ],
+            [
+                'id' => '64',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Optimus\' to Phase ID 63',
+            ],
+            [
+                'id' => '65',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Updated: \'Optimus\'',
+            ],
+            [
+                'id' => '66',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'META\' to Phase ID 63',
+            ],
+            [
+                'id' => '67',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Phase Added: \'Checkout Page\' (Status: ON-TRACK)',
+            ],
+            [
+                'id' => '68',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Coupon UI Adjustment\' to Phase ID 65',
+            ],
+            [
+                'id' => '69',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Payment Method Adjustment\' to Phase ID 65',
+            ],
+            [
+                'id' => '70',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Mapclub Points Design\' to Phase ID 65',
+            ],
+            [
+                'id' => '71',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: M. Reyes',
+            ],
+            [
+                'id' => '72',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: K. Tanaka',
+            ],
+            [
+                'id' => '73',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: N. Volkov',
+            ],
+            [
+                'id' => '74',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Action Item: \'Revise/Adjust Timeline\' (Due: 2026-06-02)',
+            ],
+            [
+                'id' => '75',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Action Item \'Revise/Adjust Timeline\' marked as completed on 2026-06-09',
+            ],
+            [
+                'id' => '76',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Updated: \'Coupon UI Adjustment\'',
+            ],
+            [
+                'id' => '77',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Updated: \'Payment Method Adjustment\'',
+            ],
+            [
+                'id' => '78',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Font sizing changes\' to Phase ID 64',
+            ],
+            [
+                'id' => '79',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Phase \'General Web\' updated: status changed to DELAYED',
+            ],
+            [
+                'id' => '80',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'BG Color change\' to Phase ID 64',
+            ],
+            [
+                'id' => '81',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Updated: \'Font sizing changes\'',
+            ],
+            [
+                'id' => '82',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Action Item: \'Story enhancement\' (Due: 2026-06-09)',
+            ],
+            [
+                'id' => '83',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Action Item \'Story enhancement\' marked as completed on 2026-06-09',
+            ],
+            [
+                'id' => '84',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Phase Added: \'Shopping Cart\' (Status: BACKLOG)',
+            ],
+            [
+                'id' => '85',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Flash sale\' to Phase ID 66',
+            ],
+            [
+                'id' => '86',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Out of stock\' to Phase ID 66',
+            ],
+            [
+                'id' => '87',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Adjust Product list\' to Phase \'Shopping Cart\'',
+            ],
+            [
+                'id' => '88',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Action Item \'Revise/Adjust Timeline\' marked as pending',
+            ],
+            [
+                'id' => '89',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Action Item \'Revise/Adjust Timeline\' marked as completed on 2026-06-09',
+            ],
+            [
+                'id' => '90',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Some task\' to Phase \'General Web\'',
+            ],
+            [
+                'id' => '91',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Unassigned: Luqman Isyraqi',
+            ],
+            [
+                'id' => '92',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Unassigned: Soraya',
+            ],
+            [
+                'id' => '93',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Imam Kriswanto',
+            ],
+            [
+                'id' => '94',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Fatha Ghani Al Rauf',
+            ],
+            [
+                'id' => '95',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Nanang Adi Utomo',
+            ],
+            [
+                'id' => '96',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Reza Wahyu',
+            ],
+            [
+                'id' => '97',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Heru Hartanto',
+            ],
+            [
+                'id' => '98',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Gigin',
+            ],
+            [
+                'id' => '99',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Dadah',
+            ],
+            [
+                'id' => '100',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Resource Assigned: Septian',
+            ],
+            [
+                'id' => '101',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Owner updated to \'Dimas H\'',
+            ],
+            [
+                'id' => '102',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Task A\' to Phase \'General Web\'',
+            ],
+            [
+                'id' => '103',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Task B\' to Phase \'General Web\'',
+            ],
+            [
+                'id' => '104',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Owner updated to \'Afwan WH\'',
+            ],
+            [
+                'id' => '105',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Action Item: \'Action to Action\' (Due: 2026-06-26)',
+            ],
+            [
+                'id' => '106',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Owner updated to \'Dimas H\'; Progress updated to %',
+            ],
+            [
+                'id' => '107',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Task CH A\' to Phase \'Checkout Page\'',
+            ],
+            [
+                'id' => '108',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Risk/Issue: \'Test Low Risk Entry\' (Severity: LOW)',
+            ],
+            [
+                'id' => '109',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Escalation Level 1 to The King',
+            ],
+            [
+                'id' => '110',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-09',
+                'status' => 'on-track',
+                'note' => 'Added Action Item: \'Action +3\' (Due: 2026-06-11)',
+            ],
+            [
+                'id' => '111',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase Added: \'PDP\' (Status: ON-TRACK)',
+            ],
+            [
+                'id' => '112',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase Added via Echo: \'Popup\' (Status: ON-TRACK)',
+            ],
+            [
+                'id' => '113',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase Status Updated via Echo: \'Popup\' to BLOCKED',
+            ],
+            [
+                'id' => '114',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Subtask Added via Echo: \'Pop A\' to Phase \'Popup\'',
+            ],
+            [
+                'id' => '115',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Subtask Added via Echo: \'Pop B\' to Phase \'Popup\'',
+            ],
+            [
+                'id' => '116',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase Added via Echo: \'Search\' (Status: ON-TRACK)',
+            ],
+            [
+                'id' => '117',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase Added via Echo: \'Others\' (Status: ON-TRACK)',
+            ],
+            [
+                'id' => '118',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Oothjers A\' to Phase \'Others\'',
+            ],
+            [
+                'id' => '119',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-10',
+                'status' => 'on-track',
+                'note' => 'Phase \'Popup\' updated',
+            ],
+            [
+                'id' => '120',
+                'project_id' => 'prj-001',
+                'date' => '2026-06-11',
+                'status' => 'on-track',
+                'note' => 'Subtask Added: \'Task C\' to Phase \'General Web\'',
+            ],
+        ];
+        $db->table('project_status_history')->insertBatch($data_project_status_history);
+
+        // --- PROJECTS ---
+        $db->table('projects')->emptyTable();
+        $data_projects = [
+            [
+                'id' => 'prj-001',
+                'code' => 'PRJ-001',
+                'name' => 'MAPCLUB UI/UX Revamp - Web Delta',
+                'owner' => 'Dimas H',
+                'squad' => 'Mapclub',
+                'status' => 'on-track',
+                'health' => 'on-track',
+                'startDate' => '2026-03-01',
+                'endDate' => '2026-06-30',
+                'progress' => '29',
+                'description' => 'Mapclub web delta features UI/UX Revamp',
+            ],
+        ];
+        $db->table('projects')->insertBatch($data_projects);
+
+        // --- RESOURCE_PROJECTS ---
+        $db->table('resource_projects')->emptyTable();
+        $data_resource_projects = [
+            [
+                'resource_id' => '10',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '16',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '38',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '39',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '40',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '42',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '57',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '66',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '67',
+                'project_id' => 'prj-001',
+            ],
+            [
+                'resource_id' => '68',
+                'project_id' => 'prj-001',
+            ],
+        ];
+        $db->table('resource_projects')->insertBatch($data_resource_projects);
+
+        // --- RESOURCES ---
+        $db->table('resources')->emptyTable();
+        $data_resources = [
+            [
+                'id' => '1',
+                'name' => 'Luqman Isyraqi',
                 'department' => 'Platform',
-                'role' => 'BE',
-                'utilization' => 92,
+                'role' => 'BA',
+                'utilization' => '92',
                 'status' => 'employee',
                 'email' => 'm.reyes@pmo.io',
                 'location' => 'Jakarta',
                 'skills' => 'Go,Kafka,Kubernetes',
-                'manager' => 'D. Iversen'
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 2,
-                'name' => 'S. Park',
+                'id' => '2',
+                'name' => 'Palupi Rahayu',
                 'department' => 'Identity',
-                'role' => 'BE',
-                'utilization' => 88,
+                'role' => 'BA',
+                'utilization' => '88',
                 'status' => 'employee',
                 'email' => 's.park@pmo.io',
                 'location' => 'Singapore',
                 'skills' => 'OAuth,Java,Postgres',
-                'manager' => 'D. Iversen'
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 3,
-                'name' => 'A. Kumar',
+                'id' => '3',
+                'name' => 'Muhammad Galih Brimantoro',
                 'department' => 'Data',
-                'role' => 'BE',
-                'utilization' => 70,
+                'role' => 'BA',
+                'utilization' => '70',
                 'status' => 'employee',
                 'email' => 'a.kumar@pmo.io',
                 'location' => 'Bengaluru',
                 'skills' => 'Spark,Airflow,Python',
-                'manager' => 'H. Larsen'
+                'manager' => 'H. Larsen',
             ],
             [
-                'id' => 4,
-                'name' => 'K. Tanaka',
+                'id' => '4',
+                'name' => 'Soraya',
                 'department' => 'Mobile',
-                'role' => 'FE',
-                'utilization' => 95,
+                'role' => 'BA',
+                'utilization' => '95',
                 'status' => 'employee',
                 'email' => 'k.tanaka@pmo.io',
                 'location' => 'Tokyo',
                 'skills' => 'Swift,Kotlin,React Native',
-                'manager' => 'P. Schwartz'
+                'manager' => 'P. Schwartz',
             ],
             [
-                'id' => 5,
-                'name' => 'R. Müller',
+                'id' => '5',
+                'name' => 'Biandra Amadea Salsabila',
                 'department' => 'Finance Tech',
                 'role' => 'BA',
-                'utilization' => 60,
+                'utilization' => '60',
                 'status' => 'employee',
                 'email' => 'r.muller@pmo.io',
                 'location' => 'Berlin',
                 'skills' => 'Revenue Rec,SAP,Stripe',
-                'manager' => 'H. Larsen'
+                'manager' => 'H. Larsen',
             ],
             [
-                'id' => 6,
-                'name' => 'T. Adeyemi',
+                'id' => '6',
+                'name' => 'Megananda Septianto',
                 'department' => 'SRE',
-                'role' => 'BE',
-                'utilization' => 35,
+                'role' => 'BA',
+                'utilization' => '35',
                 'status' => 'employee',
                 'email' => 't.adeyemi@pmo.io',
                 'location' => 'Lagos',
                 'skills' => 'Prometheus,Grafana,Terraform',
-                'manager' => 'D. Iversen'
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 7,
-                'name' => 'P. Schwartz',
-                'department' => 'Product',
+                'id' => '16',
+                'name' => 'Widya Puji Kurniawati',
+                'department' => 'BA/QA/UX',
                 'role' => 'BA',
-                'utilization' => 80,
+                'utilization' => '0',
                 'status' => 'employee',
-                'email' => 'p.schwartz@pmo.io',
-                'location' => 'Tel Aviv',
-                'skills' => 'Roadmapping,SQL,Figma',
-                'manager' => 'C. Whitaker'
+                'email' => 'widya@gtech.digital',
+                'location' => 'GDC',
+                'skills' => 'Analysis',
+                'manager' => 'Randy Alan',
             ],
             [
-                'id' => 8,
-                'name' => 'L. Okafor',
-                'department' => 'Security',
+                'id' => '38',
+                'name' => 'Imam Kriswanto',
+                'department' => 'Platform',
                 'role' => 'BE',
-                'utilization' => 50,
+                'utilization' => '0',
                 'status' => 'employee',
-                'email' => 'l.okafor@pmo.io',
-                'location' => 'London',
-                'skills' => 'AppSec,Threat Modeling',
-                'manager' => 'C. Whitaker'
+                'email' => 'imam.kriswanto@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 9,
-                'name' => 'J. Chen',
-                'department' => 'Identity',
-                'role' => 'FE',
-                'utilization' => 78,
-                'status' => 'outsource',
-                'email' => 'j.chen@contractor.io',
-                'location' => 'Taipei',
-                'skills' => 'React,TypeScript,Tailwind',
-                'manager' => 'S. Park'
-            ],
-            [
-                'id' => 10,
-                'name' => 'N. Volkov',
-                'department' => 'Data',
-                'role' => 'QA',
-                'utilization' => 65,
-                'status' => 'outsource',
-                'email' => 'n.volkov@contractor.io',
-                'location' => 'Warsaw',
-                'skills' => 'Playwright,k6,PyTest',
-                'manager' => 'A. Kumar'
-            ],
-            [
-                'id' => 11,
-                'name' => 'F. Costa',
-                'department' => 'Mobile',
-                'role' => 'QA',
-                'utilization' => 90,
+                'id' => '39',
+                'name' => 'Fatha Ghani Al Rauf',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
                 'status' => 'employee',
-                'email' => 'f.costa@pmo.io',
-                'location' => 'Lisbon',
-                'skills' => 'Appium,XCUITest,Espresso',
-                'manager' => 'K. Tanaka'
+                'email' => 'fatha.ghani.al.rauf@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 12,
-                'name' => 'H. Larsen',
-                'department' => 'Data',
-                'role' => 'BA',
-                'utilization' => 45,
+                'id' => '40',
+                'name' => 'Nanang Adi Utomo',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
                 'status' => 'employee',
-                'email' => 'h.larsen@pmo.io',
-                'location' => 'Copenhagen',
-                'skills' => 'Analytics,Stakeholder Mgmt',
-                'manager' => 'C. Whitaker'
+                'email' => 'nanang.adi.utomo@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 13,
-                'name' => 'Y. Demir',
+                'id' => '41',
+                'name' => 'Khairul Umam',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'khairul.umam@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '42',
+                'name' => 'Reza Wahyu',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'reza.wahyu@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '43',
+                'name' => 'Reyhan Razaby',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'reyhan.razaby@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '44',
+                'name' => 'Rifqi',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'rifqi@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '45',
+                'name' => 'Vega Sagitara',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'vega.sagitara@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '46',
+                'name' => 'Anton Kasuno',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'anton.kasuno@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '47',
+                'name' => 'Ahmad Djanuardi',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'ahmad.djanuardi@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '48',
+                'name' => 'Josis Jacqueline',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'josis.jacqueline@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '49',
+                'name' => 'Muhammad Fortuna',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'muhammad.fortuna@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '50',
+                'name' => 'Nunung Nurhayati',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'nunung.nurhayati@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '51',
+                'name' => 'Andre Luckyanto',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'andre.luckyanto@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '52',
+                'name' => 'Amal Kamaluddin',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'amal.kamaluddin@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '53',
+                'name' => 'Zamahsyari',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'zamahsyari@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '54',
+                'name' => 'Diaz Fatahillah',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'diaz.fatahillah@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '55',
+                'name' => 'Saddam Hussein',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'saddam.hussein@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '56',
+                'name' => 'Rio Bastian',
+                'department' => 'Platform',
+                'role' => 'BE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'rio.bastian@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '57',
+                'name' => 'Heru Hartanto',
                 'department' => 'Platform',
                 'role' => 'FE',
-                'utilization' => 82,
-                'status' => 'outsource',
-                'email' => 'y.demir@contractor.io',
-                'location' => 'Istanbul',
-                'skills' => 'Next.js,Design Systems',
-                'manager' => 'M. Reyes'
-            ],
-            [
-                'id' => 14,
-                'name' => 'G. Rossi',
-                'department' => 'Finance Tech',
-                'role' => 'QA',
-                'utilization' => 55,
+                'utilization' => '0',
                 'status' => 'employee',
-                'email' => 'g.rossi@pmo.io',
-                'location' => 'Milan',
-                'skills' => 'TestRail,Postman,SQL',
-                'manager' => 'R. Müller'
+                'email' => 'heru.hartanto@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
             ],
             [
-                'id' => 15,
-                'name' => 'B. N\'Diaye',
-                'department' => 'SRE',
+                'id' => '58',
+                'name' => 'Ikhsan',
+                'department' => 'Platform',
                 'role' => 'FE',
-                'utilization' => 25,
-                'status' => 'outsource',
-                'email' => 'b.ndiaye@contractor.io',
-                'location' => 'Dakar',
-                'skills' => 'Vue,D3,Dashboards',
-                'manager' => 'T. Adeyemi'
-            ]
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'ikhsan@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '59',
+                'name' => 'Marcell',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'marcell@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '60',
+                'name' => 'Muhammad Hasbiriza',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'muhammad.hasbiriza@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '61',
+                'name' => 'Ilham Anugrah',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'ilham.anugrah@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '62',
+                'name' => 'Jefri Manurung',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'jefri.manurung@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '63',
+                'name' => 'Fariz Rachmansyah',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'fariz.rachmansyah@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '64',
+                'name' => 'Sandro Hamonangan',
+                'department' => 'Platform',
+                'role' => 'UI/UX',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'sandro.hamonangan@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '65',
+                'name' => 'Faizal Senawijaya',
+                'department' => 'Platform',
+                'role' => 'UI/UX',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'faizal.senawijaya@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '66',
+                'name' => 'Gigin',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'gigin@pmo.io',
+                'location' => 'Local',
+                'skills' => 'PHP, CodeIgniter, MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '67',
+                'name' => 'Septian',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'septian@pmo.io',
+                'location' => 'Local',
+                'skills' => 'PHP, CodeIgniter, MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '68',
+                'name' => 'Dadah',
+                'department' => 'Platform',
+                'role' => 'FE',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'dadah@pmo.io',
+                'location' => 'Local',
+                'skills' => 'PHP, CodeIgniter, MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '69',
+                'name' => 'Jordan',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'jordan@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '70',
+                'name' => 'Eva',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'eva@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '71',
+                'name' => 'Rimayani',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'rimayani@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '72',
+                'name' => 'Shirley',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'shirley@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '73',
+                'name' => 'Indriyani',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'indriyani@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '74',
+                'name' => 'Winrou Wesley Purba',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'winrou.wesley.purba@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '75',
+                'name' => 'Putri Sakinah',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'putri.sakinah@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '76',
+                'name' => 'Sabrina',
+                'department' => 'Platform',
+                'role' => 'QA',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'sabrina@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '77',
+                'name' => 'Dimas H',
+                'department' => 'Platform',
+                'role' => 'PM',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'dimas.h@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '78',
+                'name' => 'Afwan WH',
+                'department' => 'Platform',
+                'role' => 'PM',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'afwan.wh@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '79',
+                'name' => 'Angga Baskoro',
+                'department' => 'Platform',
+                'role' => 'PM',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'angga.baskoro@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '80',
+                'name' => 'Fieza Naurah',
+                'department' => 'Platform',
+                'role' => 'PC',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'fieza.naurah@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
+            [
+                'id' => '81',
+                'name' => 'Ahmad Mafazi',
+                'department' => 'Platform',
+                'role' => 'PC',
+                'utilization' => '0',
+                'status' => 'employee',
+                'email' => 'ahmad.mafazi@pmo.io',
+                'location' => 'Jakarta',
+                'skills' => 'PHP,CodeIgniter,MySQL',
+                'manager' => 'D. Iversen',
+            ],
         ];
-        $db->table('resources')->emptyTable();
-        $db->table('resources')->insertBatch($resources);
+        $db->table('resources')->insertBatch($data_resources);
 
-        // --- 3. SQUAD_MEMBERS ---
-        $squadMembers = [
-            // Mapclub (1)
-            ['squad_id' => 1, 'resource_id' => 5], // R. Müller
-            ['squad_id' => 1, 'resource_id' => 1], // M. Reyes
-            ['squad_id' => 1, 'resource_id' => 4], // K. Tanaka
-            ['squad_id' => 1, 'resource_id' => 10], // N. Volkov
-            ['squad_id' => 1, 'resource_id' => 13], // Y. Demir
-            // Loyalty (2)
-            ['squad_id' => 2, 'resource_id' => 7], // P. Schwartz
-            ['squad_id' => 2, 'resource_id' => 2], // S. Park
-            ['squad_id' => 2, 'resource_id' => 9], // J. Chen
-            ['squad_id' => 2, 'resource_id' => 11], // F. Costa
-            // O2O (3)
-            ['squad_id' => 3, 'resource_id' => 12], // H. Larsen
-            ['squad_id' => 3, 'resource_id' => 3], // A. Kumar
-            ['squad_id' => 3, 'resource_id' => 13], // Y. Demir
-            ['squad_id' => 3, 'resource_id' => 14], // G. Rossi
-            ['squad_id' => 3, 'resource_id' => 8], // L. Okafor
-            // Digital Flagship (4)
-            ['squad_id' => 4, 'resource_id' => 5], // R. Müller
-            ['squad_id' => 4, 'resource_id' => 6], // T. Adeyemi
-            ['squad_id' => 4, 'resource_id' => 15], // B. N'Diaye
-            ['squad_id' => 4, 'resource_id' => 10], // N. Volkov
-            ['squad_id' => 4, 'resource_id' => 1], // M. Reyes
-            // Custom Web (5)
-            ['squad_id' => 5, 'resource_id' => 7], // P. Schwartz
-            ['squad_id' => 5, 'resource_id' => 8], // L. Okafor
-            ['squad_id' => 5, 'resource_id' => 4], // K. Tanaka
-            ['squad_id' => 5, 'resource_id' => 11], // F. Costa
-            // MaaS (6)
-            ['squad_id' => 6, 'resource_id' => 12], // H. Larsen
-            ['squad_id' => 6, 'resource_id' => 1], // M. Reyes
-            ['squad_id' => 6, 'resource_id' => 9], // J. Chen
-            ['squad_id' => 6, 'resource_id' => 14], // G. Rossi
-            ['squad_id' => 6, 'resource_id' => 3], // A. Kumar
-            // CRM (7)
-            ['squad_id' => 7, 'resource_id' => 7], // P. Schwartz
-            ['squad_id' => 7, 'resource_id' => 2], // S. Park
-            ['squad_id' => 7, 'resource_id' => 13], // Y. Demir
-            ['squad_id' => 7, 'resource_id' => 10], // N. Volkov
-            // Speedwork (8)
-            ['squad_id' => 8, 'resource_id' => 5], // R. Müller
-            ['squad_id' => 8, 'resource_id' => 3], // A. Kumar
-            ['squad_id' => 8, 'resource_id' => 15], // B. N'Diaye
-            ['squad_id' => 8, 'resource_id' => 11], // F. Costa
-            ['squad_id' => 8, 'resource_id' => 6], // T. Adeyemi
-            // Mekaniq (9)
-            ['squad_id' => 9, 'resource_id' => 12], // H. Larsen
-            ['squad_id' => 9, 'resource_id' => 6], // T. Adeyemi
-            ['squad_id' => 9, 'resource_id' => 4], // K. Tanaka
-            ['squad_id' => 9, 'resource_id' => 14], // G. Rossi
-            // Pandora (SBUX) (10)
-            ['squad_id' => 10, 'resource_id' => 5], // R. Müller
-            ['squad_id' => 10, 'resource_id' => 8], // L. Okafor
-            ['squad_id' => 10, 'resource_id' => 9], // J. Chen
-            ['squad_id' => 10, 'resource_id' => 10], // N. Volkov
-        ];
+        // --- SQUAD_MEMBERS ---
         $db->table('squad_members')->emptyTable();
-        $db->table('squad_members')->insertBatch($squadMembers);
+        $data_squad_members = [
+            [
+                'squad_id' => '11',
+                'resource_id' => '16',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '38',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '39',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '40',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '42',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '57',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '67',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '68',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '69',
+            ],
+            [
+                'squad_id' => '11',
+                'resource_id' => '70',
+            ],
+        ];
+        $db->table('squad_members')->insertBatch($data_squad_members);
 
-        // --- 4. PROJECTS ---
-        $projects = [
+        // --- SQUADS ---
+        $db->table('squads')->emptyTable();
+        $data_squads = [
             [
-                'id' => 'atlas',
-                'code' => 'PRJ-001',
-                'name' => 'ATLAS // Core Platform Rebuild',
-                'owner' => 'M. Reyes',
-                'squad' => 'Digital Flagship',
+                'id' => '11',
+                'name' => 'Mapclub',
+                'mission' => 'Location-based loyalty for retail.',
+                'lead' => 'K. Tanaka',
+            ],
+            [
+                'id' => '12',
+                'name' => 'Loyalty',
+                'mission' => 'Points engine + redemption flows.',
+                'lead' => 'P. Schwartz',
+            ],
+            [
+                'id' => '13',
+                'name' => 'O2O',
+                'mission' => 'Online-to-offline conversion stack.',
+                'lead' => 'H. Larsen',
+            ],
+            [
+                'id' => '14',
+                'name' => 'Digital Flagship',
+                'mission' => 'Brand digital flagship properties.',
+                'lead' => 'M. Reyes',
+            ],
+            [
+                'id' => '15',
+                'name' => 'Custom Web',
+                'mission' => 'Bespoke client web builds.',
+                'lead' => 'K. Tanaka',
+            ],
+            [
+                'id' => '16',
+                'name' => 'MaaS',
+                'mission' => 'Mobility-as-a-Service platform.',
+                'lead' => 'A. Kumar',
+            ],
+            [
+                'id' => '17',
+                'name' => 'CRM',
+                'mission' => 'Unified CRM + segmentation.',
+                'lead' => 'S. Park',
+            ],
+            [
+                'id' => '18',
+                'name' => 'Speedwork',
+                'mission' => 'Rapid-delivery internal tools.',
+                'lead' => 'T. Adeyemi',
+            ],
+            [
+                'id' => '19',
+                'name' => 'Mekaniq',
+                'mission' => 'Workshop & service ops platform.',
+                'lead' => 'T. Adeyemi',
+            ],
+            [
+                'id' => '20',
+                'name' => 'Pandora (SBUX)',
+                'mission' => 'Coffee chain ordering & rewards.',
+                'lead' => 'R. MÃ¼ller',
+            ],
+        ];
+        $db->table('squads')->insertBatch($data_squads);
+
+        // --- STATUS_DEFINITIONS ---
+        $db->table('status_definitions')->emptyTable();
+        $data_status_definitions = [
+            [
+                'id' => '12',
                 'status' => 'on-track',
-                'health' => 'Green — velocity stable, no critical risks open.',
-                'startDate' => '2026-01-15',
-                'endDate' => '2026-11-30',
-                'progress' => 32,
-                'description' => 'Rebuild of the legacy core platform onto an event-driven service mesh. Cross-team initiative spanning Platform, Data, and Security.'
+                'label' => 'ON TRACK',
+                'criteria' => 'Tracking to plan. No critical risks open. Velocity â‰¥ 90% of baseline.',
+                'color' => '#3ab007',
             ],
             [
-                'id' => 'vega',
-                'code' => 'PRJ-002',
-                'name' => 'VEGA // Identity Service',
-                'owner' => 'S. Park',
-                'squad' => 'CRM',
+                'id' => '13',
                 'status' => 'at-risk',
-                'health' => 'Amber — staffing gap in IAM team, mitigations underway.',
-                'startDate' => '2026-02-01',
-                'endDate' => '2026-09-30',
-                'progress' => 41,
-                'description' => 'Unified identity, SSO, and entitlements platform across all internal tools.'
+                'label' => 'AT RISK',
+                'criteria' => 'Identifiable threat to scope/time/cost. Mitigation in flight. Slip < 2 weeks.',
+                'color' => '#cad61f',
             ],
             [
-                'id' => 'nova',
-                'code' => 'PRJ-003',
-                'name' => 'NOVA // Data Pipeline v2',
-                'owner' => 'A. Kumar',
-                'squad' => 'MaaS',
+                'id' => '14',
                 'status' => 'blocked',
-                'health' => 'Red — blocked on data residency legal review.',
-                'startDate' => '2026-03-01',
-                'endDate' => '2027-02-28',
-                'progress' => 18,
-                'description' => 'Streaming pipeline with multi-region replication and PII tokenization.'
+                'label' => 'BLOCKED',
+                'criteria' => 'Progress halted pending external dependency, approval, or unresolved issue.',
+                'color' => '#c20000',
             ],
             [
-                'id' => 'orion',
-                'code' => 'PRJ-004',
-                'name' => 'ORION // Mobile App Refresh',
-                'owner' => 'K. Tanaka',
-                'squad' => 'Mapclub',
+                'id' => '15',
                 'status' => 'delayed',
-                'health' => 'Red — slipped Q3 ship date by 6 weeks.',
-                'startDate' => '2026-01-05',
-                'endDate' => '2026-10-15',
-                'progress' => 55,
-                'description' => 'Full redesign of consumer mobile app with new design system and offline-first sync.'
+                'label' => 'DELAYED',
+                'criteria' => 'Confirmed slip â‰¥ 2 weeks. Re-baseline required and communicated.',
+                'color' => '#ed9b0c',
             ],
             [
-                'id' => 'lyra',
-                'code' => 'PRJ-005',
-                'name' => 'LYRA // Billing Modernization',
-                'owner' => 'R. Müller',
-                'squad' => 'Loyalty',
-                'status' => 'on-track',
-                'health' => 'Green — invoicing migration on plan.',
-                'startDate' => '2026-04-01',
-                'endDate' => '2027-03-31',
-                'progress' => 22,
-                'description' => 'Migration of invoicing, dunning, and revenue recognition onto a new billing core.'
-            ],
-            [
-                'id' => 'halo',
-                'code' => 'PRJ-006',
-                'name' => 'HALO // Observability Stack',
-                'owner' => 'T. Adeyemi',
-                'squad' => 'Speedwork',
+                'id' => '16',
                 'status' => 'backlog',
-                'health' => 'Not started — scheduled for Q3.',
-                'startDate' => '2026-08-01',
-                'endDate' => '2027-04-30',
-                'progress' => 0,
-                'description' => 'Unified logs, metrics, and traces across all production services with budget alerting.'
+                'label' => 'BACKLOG',
+                'criteria' => 'Approved but not yet started. Awaiting scheduled start date or resourcing.',
+                'color' => '#6b7280',
             ],
             [
-                'id' => 'echo',
-                'code' => 'PRJ-007',
-                'name' => 'ECHO // Customer 360',
-                'owner' => 'P. Schwartz',
-                'squad' => 'O2O',
-                'status' => 'at-risk',
-                'health' => 'Amber — dependency on NOVA pipeline.',
-                'startDate' => '2026-05-01',
-                'endDate' => '2027-01-31',
-                'progress' => 12,
-                'description' => 'Single customer view aggregating product, billing, and support data.'
-            ]
+                'id' => '17',
+                'status' => 'completed',
+                'label' => 'Completed',
+                'criteria' => 'Completed but not deployed',
+                'color' => '#0046d1',
+            ],
+            [
+                'id' => '18',
+                'status' => 'deployed',
+                'label' => 'Deployed',
+                'criteria' => 'Project/Phase Deployed',
+                'color' => '#0006c2',
+            ],
+            [
+                'id' => '19',
+                'status' => 'ready-for-sit',
+                'label' => 'Ready For SIT',
+                'criteria' => 'Ready for SIT',
+                'color' => '#6a00a3',
+            ],
+            [
+                'id' => '20',
+                'status' => 'ready-for-uat',
+                'label' => 'Ready for UAT',
+                'criteria' => 'Ready for UAT',
+                'color' => '#6a00a3',
+            ],
+            [
+                'id' => '21',
+                'status' => 'sit',
+                'label' => 'SIT',
+                'criteria' => 'SIT Testing Phase',
+                'color' => '#09bea9',
+            ],
+            [
+                'id' => '22',
+                'status' => 'uat',
+                'label' => 'UAT',
+                'criteria' => 'UAT Testing Phase',
+                'color' => '#459900',
+            ],
+            [
+                'id' => '23',
+                'status' => 'development',
+                'label' => 'Development',
+                'criteria' => 'Under Development work',
+                'color' => '#689ec0',
+            ],
         ];
-        $db->table('projects')->emptyTable();
-        $db->table('projects')->insertBatch($projects);
+        $db->table('status_definitions')->insertBatch($data_status_definitions);
 
-        // --- 5. RESOURCE_PROJECTS (Mappings based on resources-data.ts) ---
-        $resourceProjects = [
-            ['resource_id' => 1, 'project_id' => 'atlas'], // M. Reyes -> ATLAS
-            ['resource_id' => 2, 'project_id' => 'vega'],  // S. Park -> VEGA
-            ['resource_id' => 3, 'project_id' => 'nova'],  // A. Kumar -> NOVA
-            ['resource_id' => 4, 'project_id' => 'orion'], // K. Tanaka -> ORION
-            ['resource_id' => 5, 'project_id' => 'lyra'],  // R. Müller -> LYRA
-            ['resource_id' => 6, 'project_id' => 'halo'],  // T. Adeyemi -> HALO
-            ['resource_id' => 7, 'project_id' => 'echo'],  // P. Schwartz -> ECHO
-            ['resource_id' => 8, 'project_id' => 'atlas'], // L. Okafor -> ATLAS
-            ['resource_id' => 9, 'project_id' => 'vega'],  // J. Chen -> VEGA
-            ['resource_id' => 10, 'project_id' => 'nova'], // N. Volkov -> NOVA
-            ['resource_id' => 11, 'project_id' => 'orion'],// F. Costa -> ORION
-            ['resource_id' => 12, 'project_id' => 'echo'], // H. Larsen -> ECHO
-            ['resource_id' => 12, 'project_id' => 'nova'], // H. Larsen -> NOVA
-            ['resource_id' => 13, 'project_id' => 'atlas'],// Y. Demir -> ATLAS
-            ['resource_id' => 14, 'project_id' => 'lyra'], // G. Rossi -> LYRA
-            ['resource_id' => 15, 'project_id' => 'halo'], // B. N'Diaye -> HALO
+        // --- USERS ---
+        $db->table('users')->emptyTable();
+        $data_users = [
+            [
+                'id' => '1',
+                'email' => 'admin@nexus.com',
+                'password' => '$2y$10$ChQGi6fOp9flvzcV0VNu6.Bdl6Lgdtn3cquugZwg4pL0CAGSSA1ke',
+                'name' => 'System Admin',
+                'role' => 'admin',
+                'created_at' => '2026-06-09 10:54:15',
+                'updated_at' => '2026-06-09 10:54:15',
+            ],
+            [
+                'id' => '2',
+                'email' => 'dimas.harsono@gtech.digital',
+                'password' => '$2y$10$eEQom2Fx6siotB5Y7js23es3Lc5iN0yil0XT94YM8i3zpQvts147u',
+                'name' => 'Dimas Harsono',
+                'role' => 'admin',
+                'created_at' => '2026-06-09 11:06:00',
+                'updated_at' => '2026-06-09 11:06:00',
+            ],
+            [
+                'id' => '3',
+                'email' => 'viewer@mail.com',
+                'password' => '$2y$10$OINfANrxQpE2dyBtgtDEru0ZGOmL3XaAePZNwbqJydwc3MJahGv8W',
+                'name' => 'Viewer Test',
+                'role' => 'viewer',
+                'created_at' => '2026-06-10 07:36:57',
+                'updated_at' => '2026-06-10 07:36:57',
+            ],
         ];
-        $db->table('resource_projects')->emptyTable();
-        $db->table('resource_projects')->insertBatch($resourceProjects);
+        $db->table('users')->insertBatch($data_users);
 
-        // --- 6. PROJECT_PHASES ---
-        $phases = [
-            // ATLAS (PRJ-001)
-            ['project_id' => 'atlas', 'name' => 'Discovery', 'start' => '2026-01-15', 'end' => '2026-03-15', 'status' => 'on-track'],
-            ['project_id' => 'atlas', 'name' => 'Architecture', 'start' => '2026-03-15', 'end' => '2026-05-30', 'status' => 'on-track'],
-            ['project_id' => 'atlas', 'name' => 'Build Phase 1', 'start' => '2026-06-01', 'end' => '2026-08-31', 'status' => 'at-risk'],
-            ['project_id' => 'atlas', 'name' => 'Build Phase 2', 'start' => '2026-09-01', 'end' => '2026-10-31', 'status' => 'backlog'],
-            ['project_id' => 'atlas', 'name' => 'Cutover', 'start' => '2026-11-01', 'end' => '2026-11-30', 'status' => 'backlog'],
-            
-            // VEGA (PRJ-002)
-            ['project_id' => 'vega', 'name' => 'Requirements', 'start' => '2026-02-01', 'end' => '2026-03-31', 'status' => 'on-track'],
-            ['project_id' => 'vega', 'name' => 'Design', 'start' => '2026-04-01', 'end' => '2026-05-31', 'status' => 'on-track'],
-            ['project_id' => 'vega', 'name' => 'Build', 'start' => '2026-06-01', 'end' => '2026-08-15', 'status' => 'at-risk'],
-            ['project_id' => 'vega', 'name' => 'Rollout', 'start' => '2026-08-15', 'end' => '2026-09-30', 'status' => 'backlog'],
-
-            // NOVA (PRJ-003)
-            ['project_id' => 'nova', 'name' => 'Legal & Compliance', 'start' => '2026-03-01', 'end' => '2026-06-30', 'status' => 'blocked'],
-            ['project_id' => 'nova', 'name' => 'Infra Buildout', 'start' => '2026-07-01', 'end' => '2026-10-31', 'status' => 'backlog'],
-            ['project_id' => 'nova', 'name' => 'Pipeline Build', 'start' => '2026-11-01', 'end' => '2027-01-31', 'status' => 'backlog'],
-            ['project_id' => 'nova', 'name' => 'Launch', 'start' => '2027-02-01', 'end' => '2027-02-28', 'status' => 'backlog'],
-
-            // ORION (PRJ-004)
-            ['project_id' => 'orion', 'name' => 'Research', 'start' => '2026-01-05', 'end' => '2026-02-28', 'status' => 'on-track'],
-            ['project_id' => 'orion', 'name' => 'Design System', 'start' => '2026-03-01', 'end' => '2026-05-31', 'status' => 'delayed'],
-            ['project_id' => 'orion', 'name' => 'Build', 'start' => '2026-06-01', 'end' => '2026-09-15', 'status' => 'delayed'],
-            ['project_id' => 'orion', 'name' => 'Beta + Launch', 'start' => '2026-09-15', 'end' => '2026-10-15', 'status' => 'backlog'],
-
-            // LYRA (PRJ-005)
-            ['project_id' => 'lyra', 'name' => 'Vendor Selection', 'start' => '2026-04-01', 'end' => '2026-06-30', 'status' => 'on-track'],
-            ['project_id' => 'lyra', 'name' => 'Integration Build', 'start' => '2026-07-01', 'end' => '2026-12-31', 'status' => 'on-track'],
-            ['project_id' => 'lyra', 'name' => 'Parallel Run', 'start' => '2027-01-01', 'end' => '2027-02-28', 'status' => 'backlog'],
-            ['project_id' => 'lyra', 'name' => 'Cutover', 'start' => '2027-03-01', 'end' => '2027-03-31', 'status' => 'backlog'],
-
-            // HALO (PRJ-006)
-            ['project_id' => 'halo', 'name' => 'Discovery', 'start' => '2026-08-01', 'end' => '2026-09-30', 'status' => 'backlog'],
-            ['project_id' => 'halo', 'name' => 'Build', 'start' => '2026-10-01', 'end' => '2027-02-28', 'status' => 'backlog'],
-            ['project_id' => 'halo', 'name' => 'Rollout', 'start' => '2027-03-01', 'end' => '2027-04-30', 'status' => 'backlog'],
-
-            // ECHO (PRJ-007)
-            ['project_id' => 'echo', 'name' => 'Data Modeling', 'start' => '2026-05-01', 'end' => '2026-07-31', 'status' => 'on-track'],
-            ['project_id' => 'echo', 'name' => 'Ingestion', 'start' => '2026-08-01', 'end' => '2026-11-30', 'status' => 'at-risk'],
-            ['project_id' => 'echo', 'name' => 'App Build', 'start' => '2026-12-01', 'end' => '2027-01-31', 'status' => 'backlog'],
-        ];
-        $db->table('project_phases')->emptyTable();
-        $db->table('project_phases')->insertBatch($phases);
-
-        // --- 7. PROJECT_DEPENDENCIES ---
-        $dependencies = [
-            ['project_id' => 'atlas', 'dep_project_id' => 'vega', 'dep_project_name' => 'VEGA // Identity Service', 'type' => 'depends-on', 'status' => 'at-risk'],
-            ['project_id' => 'atlas', 'dep_project_id' => 'nova', 'dep_project_name' => 'NOVA // Data Pipeline', 'type' => 'blocks', 'status' => 'on-track'],
-            ['project_id' => 'vega', 'dep_project_id' => 'atlas', 'dep_project_name' => 'ATLAS // Core Platform', 'type' => 'blocks', 'status' => 'on-track'],
-            ['project_id' => 'nova', 'dep_project_id' => 'atlas', 'dep_project_name' => 'ATLAS // Core Platform', 'type' => 'depends-on', 'status' => 'on-track'],
-            ['project_id' => 'halo', 'dep_project_id' => 'atlas', 'dep_project_name' => 'ATLAS // Core Platform', 'type' => 'depends-on', 'status' => 'on-track'],
-            ['project_id' => 'echo', 'dep_project_id' => 'nova', 'dep_project_name' => 'NOVA // Data Pipeline', 'type' => 'depends-on', 'status' => 'blocked'],
-        ];
-        $db->table('project_dependencies')->emptyTable();
-        $db->table('project_dependencies')->insertBatch($dependencies);
-
-        // --- 8. PROJECT_ACTION_ITEMS ---
-        $actionItems = [
-            // ATLAS
-            ['id' => 'a1', 'project_id' => 'atlas', 'title' => 'Finalize event schema registry', 'owner' => 'S. Park', 'due' => '2026-06-12', 'done' => 0],
-            ['id' => 'a2', 'project_id' => 'atlas', 'title' => 'Approve vendor for service mesh', 'owner' => 'M. Reyes', 'due' => '2026-05-30', 'done' => 1],
-            ['id' => 'a3', 'project_id' => 'atlas', 'title' => 'Security review of cutover plan', 'owner' => 'L. Okafor', 'due' => '2026-10-10', 'done' => 0],
-            // VEGA
-            ['id' => 'v1', 'project_id' => 'vega', 'title' => 'Hire 2 senior IAM engineers', 'owner' => 'S. Park', 'due' => '2026-07-01', 'done' => 0],
-            ['id' => 'v2', 'project_id' => 'vega', 'title' => 'Define entitlements model', 'owner' => 'J. Chen', 'due' => '2026-05-20', 'done' => 1],
-            // NOVA
-            ['id' => 'n1', 'project_id' => 'nova', 'title' => 'Escalate legal review to GC', 'owner' => 'A. Kumar', 'due' => '2026-06-01', 'done' => 0],
-            // ORION
-            ['id' => 'o1', 'project_id' => 'orion', 'title' => 'Recover design system timeline', 'owner' => 'K. Tanaka', 'due' => '2026-06-30', 'done' => 0],
-            ['id' => 'o2', 'project_id' => 'orion', 'title' => 'Re-baseline ship date with leadership', 'owner' => 'K. Tanaka', 'due' => '2026-06-10', 'done' => 1],
-            // LYRA
-            ['id' => 'l1', 'project_id' => 'lyra', 'title' => 'Sign vendor MSA', 'owner' => 'R. Müller', 'due' => '2026-06-25', 'done' => 0],
-            // ECHO
-            ['id' => 'e1', 'project_id' => 'echo', 'title' => 'Define fallback ingestion path if NOVA slips', 'owner' => 'P. Schwartz', 'due' => '2026-07-15', 'done' => 0],
-        ];
-        $db->table('project_action_items')->emptyTable();
-        $db->table('project_action_items')->insertBatch($actionItems);
-
-        // --- 9. PROJECT_STATUS_HISTORY ---
-        $statusHistory = [
-            ['project_id' => 'atlas', 'date' => '2026-02-01', 'status' => 'on-track', 'note' => 'Kickoff complete.'],
-            ['project_id' => 'atlas', 'date' => '2026-04-12', 'status' => 'at-risk', 'note' => 'Vendor delay on mesh decision.'],
-            ['project_id' => 'atlas', 'date' => '2026-05-30', 'status' => 'on-track', 'note' => 'Vendor signed; back on plan.'],
-            
-            ['project_id' => 'vega', 'date' => '2026-02-15', 'status' => 'on-track', 'note' => 'Project initiated.'],
-            ['project_id' => 'vega', 'date' => '2026-05-01', 'status' => 'at-risk', 'note' => 'Two senior engineers resigned.'],
-
-            ['project_id' => 'nova', 'date' => '2026-03-10', 'status' => 'on-track', 'note' => 'Project started.'],
-            ['project_id' => 'nova', 'date' => '2026-04-22', 'status' => 'at-risk', 'note' => 'Legal flagged data residency.'],
-            ['project_id' => 'nova', 'date' => '2026-05-15', 'status' => 'blocked', 'note' => 'Blocked pending GC review.'],
-
-            ['project_id' => 'orion', 'date' => '2026-02-01', 'status' => 'on-track', 'note' => 'Research wrapped.'],
-            ['project_id' => 'orion', 'date' => '2026-04-15', 'status' => 'at-risk', 'note' => 'Design system behind.'],
-            ['project_id' => 'orion', 'date' => '2026-05-22', 'status' => 'delayed', 'note' => 'Re-baselined to October.'],
-
-            ['project_id' => 'lyra', 'date' => '2026-04-10', 'status' => 'on-track', 'note' => 'Kickoff.'],
-
-            ['project_id' => 'halo', 'date' => '2026-05-01', 'status' => 'backlog', 'note' => 'Approved for Q3 start.'],
-
-            ['project_id' => 'echo', 'date' => '2026-05-10', 'status' => 'on-track', 'note' => 'Started.'],
-            ['project_id' => 'echo', 'date' => '2026-05-20', 'status' => 'at-risk', 'note' => 'NOVA blocked — upstream risk.'],
-        ];
-        $db->table('project_status_history')->emptyTable();
-        $db->table('project_status_history')->insertBatch($statusHistory);
-
-        // --- 10. PROJECT_ESCALATIONS ---
-        $escalations = [
-            ['project_id' => 'atlas', 'date' => '2026-04-20', 'level' => 'L2', 'note' => 'Vendor procurement delay.', 'to_recipient' => 'CTO Office'],
-            ['project_id' => 'vega', 'date' => '2026-05-05', 'level' => 'L2', 'note' => 'Staffing gap — request reallocation.', 'to_recipient' => 'VP Engineering'],
-            ['project_id' => 'nova', 'date' => '2026-05-15', 'level' => 'L3', 'note' => 'Blocking issue, request exec sponsor.', 'to_recipient' => 'Chief Legal Officer'],
-            ['project_id' => 'echo', 'date' => '2026-05-22', 'level' => 'L1', 'note' => 'Tracking NOVA blockage impact.', 'to_recipient' => 'Project Office'],
-        ];
-        $db->table('project_escalations')->emptyTable();
-        $db->table('project_escalations')->insertBatch($escalations);
-
-        // --- 11. PROJECT_RISKS ---
-        $risks = [
-            ['id' => 'r1', 'project_id' => 'atlas', 'title' => 'Service mesh learning curve', 'severity' => 'med', 'type' => 'risk', 'mitigation' => 'External SME engaged for 8 weeks.', 'owner' => 'M. Reyes'],
-            ['id' => 'i1', 'project_id' => 'atlas', 'title' => 'Schema registry tooling unstable', 'severity' => 'high', 'type' => 'issue', 'mitigation' => 'Pinned to v2.1; eval alternative.', 'owner' => 'S. Park'],
-            
-            ['id' => 'vr1', 'project_id' => 'vega', 'title' => 'Senior IAM attrition', 'severity' => 'high', 'type' => 'issue', 'mitigation' => 'Open reqs + contractor backfill.', 'owner' => 'S. Park'],
-            ['id' => 'vr2', 'project_id' => 'vega', 'title' => 'SSO migration window', 'severity' => 'med', 'type' => 'risk', 'mitigation' => 'Phased rollout per BU.', 'owner' => 'J. Chen'],
-            
-            ['id' => 'ni1', 'project_id' => 'nova', 'title' => 'EU residency unresolved', 'severity' => 'high', 'type' => 'issue', 'mitigation' => 'GC engaged; awaiting opinion.', 'owner' => 'A. Kumar'],
-            
-            ['id' => 'oi1', 'project_id' => 'orion', 'title' => 'Design system slip cascading', 'severity' => 'high', 'type' => 'issue', 'mitigation' => 'Cut scope on tertiary screens.', 'owner' => 'K. Tanaka'],
-            ['id' => 'or1', 'project_id' => 'orion', 'title' => 'Offline sync edge cases', 'severity' => 'med', 'type' => 'risk', 'mitigation' => 'Spike + 2-week buffer added.', 'owner' => 'F. Costa'],
-            
-            ['id' => 'lr1', 'project_id' => 'lyra', 'title' => 'Revenue rec mapping ambiguity', 'severity' => 'med', 'type' => 'risk', 'mitigation' => 'Finance workshop scheduled.', 'owner' => 'R. Müller'],
-            
-            ['id' => 'hr1', 'project_id' => 'halo', 'title' => 'Tool sprawl across BUs', 'severity' => 'low', 'type' => 'risk', 'mitigation' => 'Standardize on OTel.', 'owner' => 'T. Adeyemi'],
-            
-            ['id' => 'er1', 'project_id' => 'echo', 'title' => 'Upstream NOVA blockage', 'severity' => 'high', 'type' => 'risk', 'mitigation' => 'Defined fallback ingestion path.', 'owner' => 'P. Schwartz'],
-        ];
-        $db->table('project_risks')->emptyTable();
-        $db->table('project_risks')->insertBatch($risks);
-
-        // --- 12. PROJECT_DOCUMENTS ---
-        $documents = [
-            ['id' => 'd1', 'project_id' => 'atlas', 'name' => 'Charter_v3.pdf', 'size' => 184320, 'uploaded_at' => '2026-02-04', 'file_path' => 'uploads/Charter_v3.pdf'],
-            ['id' => 'd2', 'project_id' => 'atlas', 'name' => 'Architecture-Decision-Record.docx', 'size' => 56210, 'uploaded_at' => '2026-03-22', 'file_path' => 'uploads/Architecture-Decision-Record.docx'],
-        ];
-        $db->table('project_documents')->emptyTable();
-        $db->table('project_documents')->insertBatch($documents);
     }
 }

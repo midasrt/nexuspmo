@@ -3,10 +3,17 @@
 <?= $this->section('content') ?>
 <?php
 $roleHex = [
-    'FE' => '#34d399',
-    'BE' => '#fbbf24',
-    'QA' => '#f472b6',
-    'BA' => '#a78bfa',
+    'FE' => 'var(--status-ontrack)',
+    'BE' => 'var(--status-atrisk)',
+    'QA' => 'var(--status-delayed)',
+    'BA' => 'var(--status-backlog)',
+];
+
+$roleBgs = [
+    'FE' => 'bg-status-ontrack',
+    'BE' => 'bg-status-atrisk',
+    'QA' => 'bg-status-delayed',
+    'BA' => 'bg-status-backlog',
 ];
 
 // Layout Constants
@@ -44,7 +51,6 @@ foreach ($groups as $i => $g) {
     
     $memberNodes = [];
     foreach ($members as $idx => $m) {
-        // Offset slightly by adding half step
         $angle = $idx * $memStep - pi() / 2 + ($memStep / 2);
         $memberNodes[] = [
             'member' => $m,
@@ -68,78 +74,72 @@ $H = ceil(count($groups) / $cols) * $rowH + 40;
 if ($H < 450) $H = 450;
 ?>
 
-<div>
-    <!-- Sub-header -->
-    <div class="border-b border-foreground bg-background">
-        <div class="max-w-[1400px] mx-auto px-6 py-3">
-            <a href="<?= base_url('squads') ?>" class="inline-flex items-center gap-2 mono text-[10px] uppercase tracking-widest brutal-border bg-card px-3 py-1.5 brutal-hover">
-                <i data-lucide="arrow-left" class="h-3 w-3" stroke-width="3"></i>
+<div class="min-h-screen pb-24">
+    <!-- Sub-header / Back button -->
+    <div class="border-b border-ink/15 no-print">
+        <div class="w-full px-8 lg:px-14 py-4 flex items-center justify-between">
+            <a href="<?= base_url('squads') ?>" class="rounded-full border border-ink/20 bg-card text-ink hover:bg-secondary px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold flex items-center gap-1.5 shadow-sm">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
                 Back to Squads
             </a>
         </div>
     </div>
 
     <!-- Map Container -->
-    <div class="max-w-[1400px] mx-auto p-6">
+    <div class="w-full px-8 lg:px-14 mt-8">
         
         <!-- Header -->
-        <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
             <div>
-                <div class="mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                    Squad // Map
-                </div>
-                <h1 class="mono text-3xl md:text-4xl font-black uppercase tracking-tight mt-1">
+                <span class="eyebrow">Squad // Map</span>
+                <h1 class="font-display text-2xl md:text-3xl font-black uppercase mt-1 tracking-tight">
                     Squad ↔ Project Mesh
                 </h1>
             </div>
             
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- Legend -->
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-1.5">
                     <?php foreach (['FE', 'BE', 'QA', 'BA'] as $role): ?>
-                        <div class="flex items-center gap-1.5 border border-foreground px-2 py-1 bg-card">
-                            <span class="inline-block w-3 h-3 border border-foreground" style="background: <?= $roleHex[$role] ?>"></span>
-                            <span class="mono text-[10px] uppercase tracking-widest"><?= $role ?></span>
+                        <div class="flex items-center gap-1.5 rounded-full border border-ink/15 px-3 py-1 bg-background text-[10px] font-mono uppercase tracking-wider font-bold">
+                            <span class="inline-block w-2.5 h-2.5 rounded-full border border-ink/10 <?= $roleBgs[$role] ?>"></span>
+                            <span><?= $role ?></span>
                         </div>
                     <?php endforeach; ?>
-                    <div class="flex items-center gap-1.5 border border-foreground px-2 py-1 bg-card">
-                        <span class="inline-block w-3 h-[2px] bg-foreground"></span>
-                        <span class="mono text-[10px] uppercase tracking-widest">Project</span>
-                    </div>
                 </div>
 
-                <button onclick="exportSquadMapPdf()" class="brutal-border bg-foreground text-background px-4 py-2 mono text-xs uppercase tracking-widest font-black brutal-hover flex items-center gap-2">
-                    <i data-lucide="download" class="h-3.5 w-3.5" stroke-width="3"></i>
+                <button onclick="exportSquadMapPdf()" class="rounded-full border border-ink/20 bg-ink text-paper hover:bg-ink/90 px-4 py-2 text-xs font-mono uppercase tracking-widest font-bold flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
                     Export PDF
                 </button>
             </div>
         </div>
 
         <!-- SVG Map Card -->
-        <div id="squad-map-capture" class="brutal-border bg-card p-4 brutal-shadow">
+        <div id="squad-map-capture" class="rounded-2xl border border-ink/15 bg-card p-6 overflow-x-auto no-scrollbar shadow-sm">
             <svg viewBox="0 0 <?= $W ?> <?= $H ?>" class="w-full h-auto bg-card" style="min-width: 700px;">
                 <?php foreach ($squadNodes as $s): ?>
                     <g>
                         <!-- Lines connecting squad center to project boxes -->
                         <?php foreach ($s['projectNodes'] as $n): ?>
-                            <line x1="<?= $s['cx'] ?>" y1="<?= $s['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="currentColor" stroke-width="1.5" class="text-foreground/60" />
+                            <line x1="<?= $s['cx'] ?>" y1="<?= $s['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="var(--ink)" stroke-width="0.8" opacity="0.35" />
                         <?php endforeach; ?>
 
                         <!-- Lines connecting squad center to member circles -->
                         <?php foreach ($s['memberNodes'] as $n): ?>
-                            <line x1="<?= $s['cx'] ?>" y1="<?= $s['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" class="text-foreground/30" />
+                            <line x1="<?= $s['cx'] ?>" y1="<?= $s['cy'] ?>" x2="<?= $n['x'] ?>" y2="<?= $n['y'] ?>" stroke="var(--ink)" stroke-width="0.6" stroke-dasharray="3 3" opacity="0.25" />
                         <?php endforeach; ?>
 
                         <!-- Central Squad Box -->
                         <g>
-                            <rect x="<?= $s['cx'] - 110 ?>" y="<?= $s['cy'] - 32 ?>" width="220" height="64" class="fill-foreground" />
-                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] - 12 ?>" text-anchor="middle" class="fill-background mono" style="font-size: 9px; letter-spacing: 1px;">
+                            <rect x="<?= $s['cx'] - 110 ?>" y="<?= $s['cy'] - 32 ?>" width="220" height="64" rx="12" fill="var(--ink)" />
+                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] - 12 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[8px] uppercase tracking-widest opacity-80">
                                 SQUAD
                             </text>
-                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] + 6 ?>" text-anchor="middle" class="fill-background mono" style="font-size: 13px; font-weight: 900; letter-spacing: 1px;">
+                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] + 6 ?>" text-anchor="middle" fill="var(--paper)" class="font-display text-sm font-bold uppercase tracking-tight">
                                 <?= esc(strtoupper($s['squad']['name'])) ?>
                             </text>
-                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] + 22 ?>" text-anchor="middle" class="fill-background/70 mono" style="font-size: 9px; letter-spacing: 1px;">
+                            <text x="<?= $s['cx'] ?>" y="<?= $s['cy'] + 21 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[8px] uppercase tracking-widest opacity-70">
                                 <?= count($s['projects']) ?> PRJ · <?= count($s['members']) ?> RES
                             </text>
                         </g>
@@ -147,15 +147,15 @@ if ($H < 450) $H = 450;
                         <!-- Project Nodes surrounding the center -->
                         <?php foreach ($s['projectNodes'] as $n): ?>
                             <g>
-                                <rect x="<?= $n['x'] - 70 ?>" y="<?= $n['y'] - 18 ?>" width="140" height="36" class="fill-card stroke-foreground" stroke-width="1.2" />
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] - 4 ?>" text-anchor="middle" class="fill-muted-foreground mono" style="font-size: 8px; letter-spacing: 1px;">
+                                <rect x="<?= $n['x'] - 70 ?>" y="<?= $n['y'] - 18 ?>" width="140" height="36" rx="8" fill="var(--card)" stroke="var(--ink)" stroke-width="0.8" />
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] - 4 ?>" text-anchor="middle" fill="var(--muted-foreground)" class="font-mono text-[8px] uppercase tracking-widest">
                                     <?= esc($n['project']['code']) ?>
                                 </text>
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 10 ?>" text-anchor="middle" class="fill-foreground mono" style="font-size: 9px; font-weight: 900;">
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 10 ?>" text-anchor="middle" fill="var(--ink)" class="font-display text-[9px] font-bold uppercase">
                                     <?php
                                     $pName = esc($n['project']['name']);
                                     $pNameParts = explode('//', $pName);
-                                    echo esc(substr(trim($pNameParts[0]), 0, 18));
+                                    echo esc(substr(trim($pNameParts[0]), 0, 16));
                                     ?>
                                 </text>
                             </g>
@@ -164,11 +164,11 @@ if ($H < 450) $H = 450;
                         <!-- Member Nodes surrounding the center -->
                         <?php foreach ($s['memberNodes'] as $n): ?>
                             <g>
-                                <circle cx="<?= $n['x'] ?>" cy="<?= $n['y'] ?>" r="20" fill="<?= $roleHex[$n['member']['role']] ?>" stroke="currentColor" stroke-width="1.2" class="text-foreground" />
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 3 ?>" text-anchor="middle" class="mono" style="font-size: 9px; font-weight: 900;">
+                                <circle cx="<?= $n['x'] ?>" cy="<?= $n['y'] ?>" r="20" fill="<?= $roleHex[$n['member']['role']] ?>" stroke="var(--ink)" stroke-width="0.8" />
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 3 ?>" text-anchor="middle" fill="var(--paper)" class="font-mono text-[9px] font-bold">
                                     <?= esc($n['member']['role']) ?>
                                 </text>
-                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 34 ?>" text-anchor="middle" class="fill-foreground mono" style="font-size: 9px; font-weight: 700;">
+                                <text x="<?= $n['x'] ?>" y="<?= $n['y'] + 34 ?>" text-anchor="middle" fill="var(--ink)" class="font-display text-[9px] font-semibold uppercase">
                                     <?= esc($n['member']['name']) ?>
                                 </text>
                             </g>
@@ -180,25 +180,5 @@ if ($H < 450) $H = 450;
     </div>
 </div>
 
-<script>
-    async function exportSquadMapPdf() {
-        const { jsPDF } = window.jspdf;
-        const element = document.getElementById('squad-map-capture');
-        
-        const canvas = await html2canvas(element, {
-            backgroundColor: "#f5efe1",
-            scale: 2
-        });
-        
-        const img = canvas.toDataURL("image/png");
-        const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a3" });
-        const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = pdf.internal.pageSize.getHeight();
-        const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-        const w = canvas.width * ratio;
-        const h = canvas.height * ratio;
-        pdf.addImage(img, "PNG", (pageW - w) / 2, (pageH - h) / 2, w, h);
-        pdf.save("squad-map.pdf");
-    }
-</script>
+<script src="<?= base_url('js/squad_map.js') ?>"></script>
 <?= $this->endSection() ?>

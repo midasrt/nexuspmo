@@ -92,6 +92,7 @@ class Projects extends BaseController
 
     public function detail($id)
     {
+        self::recalculateAllResourceUtilizations();
         $projectModel = new ProjectModel();
         $project = $projectModel->find($id);
 
@@ -112,11 +113,28 @@ class Projects extends BaseController
         $documentModel = new DocumentModel();
 
         // Fetch relations
-        $project['phases'] = $phaseModel->where('project_id', $id)->orderBy('sequence', 'ASC')->orderBy('start', 'ASC')->findAll();
-        $subtaskModel = new \App\Models\SubtaskModel();
+        $db = \Config\Database::connect();
+        $project['phases'] = $db->table('project_phases p')
+            ->select('p.*, r.name as resource_name, r.role as resource_role')
+            ->join('resources r', 'p.resource_id = r.id', 'left')
+            ->where('p.project_id', $id)
+            ->orderBy('p.sequence', 'ASC')
+            ->orderBy('p.start', 'ASC')
+            ->get()
+            ->getResultArray();
+
         $totalProgressSum = 0;
         foreach ($project['phases'] as &$ph) {
-            $ph['subtasks'] = $subtaskModel->where('phase_id', $ph['id'])->orderBy('sequence', 'ASC')->orderBy('start', 'ASC')->findAll();
+            $ph['subtasks'] = $db->table('project_phase_subtasks s')
+                ->select('s.*, r.name as resource_name, r.role as resource_role')
+                ->join('resources r', 's.resource_id = r.id', 'left')
+                ->where('s.phase_id', $ph['id'])
+                ->orderBy('s.sequence', 'ASC')
+                ->orderBy('s.start', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $phProgress = 0;
             if (count($ph['subtasks']) > 0) {
                 $comp = 0;
                 foreach ($ph['subtasks'] as $sub) {
@@ -124,12 +142,15 @@ class Projects extends BaseController
                         $comp++;
                     }
                 }
+                $phProgress = (int)(($comp / count($ph['subtasks'])) * 100);
                 $totalProgressSum += ($comp / count($ph['subtasks']));
             } else {
+                $phProgress = in_array(strtolower($ph['status']), ['complete', 'completed', 'done']) ? 100 : 0;
                 if (in_array(strtolower($ph['status']), ['complete', 'completed', 'done'])) {
                     $totalProgressSum += 1.0;
                 }
             }
+            $ph['progress'] = $phProgress;
         }
         unset($ph);
         $project['progress'] = count($project['phases']) > 0 ? (int)(($totalProgressSum / count($project['phases'])) * 100) : 0;
@@ -165,11 +186,21 @@ class Projects extends BaseController
         $allResources = $resourceModel->findAll();
         $allProjects = $projectModel->where('id !=', $id)->findAll();
 
+        $squadModel = new \App\Models\SquadModel();
+        $allSquads = $squadModel->findAll();
+
+        $settingsModel = new \App\Models\SettingsModel();
+        $dailyWorkHours = $settingsModel->getSetting('daily_work_hours', 8);
+        $workDaysPerWeek = $settingsModel->getSetting('work_days_per_week', 5);
+
         return view('project_detail', [
             'project'           => $project,
             'assignedResources' => $assignedResources,
             'allResources'      => $allResources,
             'allProjects'       => $allProjects,
+            'allSquads'         => $allSquads,
+            'dailyWorkHours'    => $dailyWorkHours,
+            'workDaysPerWeek'   => $workDaysPerWeek,
             'title'             => strtoupper($project['id']) . ' // Project Detail',
             'currentPath'       => '/projects'
         ]);
@@ -253,23 +284,6 @@ class Projects extends BaseController
                     ]);
                 }
             }
-        } else {
-            $phaseModel->insert([
-                'project_id'  => $id,
-                'name'        => 'Discovery',
-                'description' => 'Discovery Phase',
-                'start'       => $startDate,
-                'end'         => date('Y-m-d', strtotime($startDate . ' + 1 month')),
-                'status'      => $status
-            ]);
-            $phaseModel->insert([
-                'project_id'  => $id,
-                'name'        => 'Execution',
-                'description' => 'Execution Phase',
-                'start'       => date('Y-m-d', strtotime($startDate . ' + 1 month')),
-                'end'         => $endDate,
-                'status'      => 'backlog'
-            ]);
         }
 
         $this->updateProjectProgress($id);
@@ -513,6 +527,36 @@ class Projects extends BaseController
         if (empty($name)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Phase Name is required.']);
         }
+
+        // Subtasks inputs
+        $subtaskNames = $this->request->getPost('subtask_names') ?: [];
+        $subtaskStarts = $this->request->getPost('subtask_starts') ?: [];
+        $subtaskEnds = $this->request->getPost('subtask_ends') ?: [];
+        $subtaskStatuses = $this->request->getPost('subtask_statuses') ?: [];
+        $subtaskDescriptions = $this->request->getPost('subtask_descriptions') ?: [];
+
+        // If subtasks are provided, envelope the phase dates around them
+        if (!empty($subtaskNames)) {
+            $minStart = null;
+            $maxEnd = null;
+            foreach ($subtaskNames as $index => $subName) {
+                if (empty(trim($subName))) continue;
+                $sDate = $subtaskStarts[$index] ?? date('Y-m-d');
+                $eDate = $subtaskEnds[$index] ?? date('Y-m-d');
+                if ($minStart === null || $sDate < $minStart) {
+                    $minStart = $sDate;
+                }
+                if ($maxEnd === null || $eDate > $maxEnd) {
+                    $maxEnd = $eDate;
+                }
+            }
+            if ($minStart !== null) {
+                $start = $minStart;
+            }
+            if ($maxEnd !== null) {
+                $end = $maxEnd;
+            }
+        }
         
         $phaseModel->insert([
             'project_id'  => $project_id,
@@ -523,6 +567,25 @@ class Projects extends BaseController
             'status'      => $status,
             'sequence'    => $nextSeq
         ]);
+
+        $phase_id = $phaseModel->getInsertID();
+
+        if (!empty($subtaskNames) && $phase_id) {
+            $subtaskModel = new \App\Models\SubtaskModel();
+            $seq = 0;
+            foreach ($subtaskNames as $index => $subName) {
+                if (empty(trim($subName))) continue;
+                $subtaskModel->insert([
+                    'phase_id'    => $phase_id,
+                    'name'        => trim($subName),
+                    'description' => $subtaskDescriptions[$index] ?? '',
+                    'start'       => $subtaskStarts[$index] ?? date('Y-m-d'),
+                    'end'         => $subtaskEnds[$index] ?? date('Y-m-d'),
+                    'status'      => $subtaskStatuses[$index] ?? 'backlog',
+                    'sequence'    => $seq++
+                ]);
+            }
+        }
 
         $this->logProjectActivity($project_id, "Phase Added: '{$name}' (Status: " . strtoupper($status) . ")", $oldState);
         $this->updateProjectProgress($project_id);
@@ -648,6 +711,126 @@ class Projects extends BaseController
         $res = $resourceModel->find($resource_id);
         $resName = $res ? $res['name'] : 'Unknown Resource';
         $this->logProjectActivity($project_id, "Resource Unassigned: {$resName}");
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
+    public function assignSquadAjax($project_id) {
+        $squad_id = $this->request->getPost('squad_id');
+        $projectModel = new ProjectModel();
+        $project = $projectModel->find($project_id);
+        if (!$project) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Project not found.']);
+        }
+
+        $projectModel->update($project_id, ['squad' => $squad_id ?: null]);
+
+        $db = \Config\Database::connect();
+        
+        // Find PM resource IDs currently assigned to this project
+        $pmResourceIds = $db->table('resource_projects rp')
+            ->select('rp.resource_id')
+            ->join('resources r', 'rp.resource_id = r.id')
+            ->where('rp.project_id', $project_id)
+            ->where('r.role', 'PM')
+            ->get()
+            ->getResultArray();
+        $pmIds = array_column($pmResourceIds, 'resource_id');
+
+        // 1. Remove all existing resources assigned to this project, EXCEPT PMs
+        $deleteQuery = $db->table('resource_projects')->where('project_id', $project_id);
+        if (!empty($pmIds)) {
+            $deleteQuery->whereNotIn('resource_id', $pmIds);
+        }
+        $deleteQuery->delete();
+
+        // Get all PM resource IDs in the system to protect them from task/phase unassignment
+        $allPmResources = $db->table('resources')->where('role', 'PM')->select('id')->get()->getResultArray();
+        $allPmIds = array_column($allPmResources, 'id');
+
+        // 2. Set resource_id = null (unassigned) for all phases of this project, EXCEPT PMs
+        $phaseUpdate = $db->table('project_phases')->where('project_id', $project_id);
+        if (!empty($allPmIds)) {
+            $phaseUpdate->whereNotIn('resource_id', $allPmIds);
+        }
+        $phaseUpdate->update(['resource_id' => null]);
+
+        // 3. Set resource_id = null (unassigned) for all subtasks of all phases of this project, EXCEPT PMs
+        $phaseIds = $db->table('project_phases')->where('project_id', $project_id)->select('id')->get()->getResultArray();
+        $phaseIdList = array_column($phaseIds, 'id');
+        if (!empty($phaseIdList)) {
+            $subtaskUpdate = $db->table('project_phase_subtasks')->whereIn('phase_id', $phaseIdList);
+            if (!empty($allPmIds)) {
+                $subtaskUpdate->whereNotIn('resource_id', $allPmIds);
+            }
+            $subtaskUpdate->update(['resource_id' => null]);
+        }
+
+        $squadName = 'None';
+        
+        if (!empty($squad_id)) {
+            $squadModel = new \App\Models\SquadModel();
+            $squad = $squadModel->find($squad_id);
+            if ($squad) {
+                $squadName = $squad['name'];
+                $members = $db->table('squad_members')->where('squad_id', $squad_id)->get()->getResultArray();
+                foreach ($members as $m) {
+                    $db->table('resource_projects')->insert([
+                        'resource_id' => $m['resource_id'],
+                        'project_id'  => $project_id
+                    ]);
+                }
+            }
+        }
+
+        self::recalculateAllResourceUtilizations();
+
+        $this->logProjectActivity($project_id, "Squad Assigned: {$squadName} (squad members auto-assigned, previous members and task assignments reset)");
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
+    public function assignPhaseResourceAjax($project_id, $phase_id) {
+        $resource_id = $this->request->getPost('resource_id');
+        $phaseModel = new PhaseModel();
+        $phase = $phaseModel->find($phase_id);
+        if (!$phase || $phase['project_id'] !== $project_id) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Phase not found.']);
+        }
+        
+        $phaseModel->update($phase_id, ['resource_id' => $resource_id ?: null]);
+        
+        // Log activity
+        $resourceModel = new ResourceModel();
+        $resName = 'None';
+        if (!empty($resource_id)) {
+            $res = $resourceModel->find($resource_id);
+            if ($res) $resName = $res['name'];
+        }
+        $this->logProjectActivity($project_id, "Resource '{$resName}' assigned to Phase '{$phase['name']}'");
+        
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
+    public function assignSubtaskResourceAjax($project_id, $subtask_id) {
+        $resource_id = $this->request->getPost('resource_id');
+        $subtaskModel = new \App\Models\SubtaskModel();
+        $subtask = $subtaskModel->find($subtask_id);
+        if (!$subtask) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Subtask not found.']);
+        }
+        
+        $subtaskModel->update($subtask_id, ['resource_id' => $resource_id ?: null]);
+        
+        self::recalculateAllResourceUtilizations();
+        
+        // Log activity
+        $resourceModel = new ResourceModel();
+        $resName = 'None';
+        if (!empty($resource_id)) {
+            $res = $resourceModel->find($resource_id);
+            if ($res) $resName = $res['name'];
+        }
+        $this->logProjectActivity($project_id, "Resource '{$resName}' assigned to Subtask '{$subtask['name']}'");
+        
         return $this->response->setJSON(['status' => 'success']);
     }
 
@@ -1194,23 +1377,183 @@ class Projects extends BaseController
         $projectModel->update($projectId, ['progress' => $progress]);
     }
 
-    private function recalculatePhaseDates($phaseId)
+    private static function getWorkingDaysCount($startDateStr, $endDateStr, $workDaysPerWeek)
+    {
+        $start = new \DateTime($startDateStr);
+        $end = new \DateTime($endDateStr);
+        if ($start > $end) {
+            return 0;
+        }
+
+        $workDays = 0;
+        $period = new \DatePeriod(
+            $start,
+            new \DateInterval('P1D'),
+            (clone $end)->modify('+1 day')
+        );
+
+        foreach ($period as $date) {
+            $w = (int)$date->format('w'); // 0 = Sunday, 6 = Saturday
+            if ($workDaysPerWeek == 5) {
+                if ($w !== 0 && $w !== 6) {
+                    $workDays++;
+                }
+            } elseif ($workDaysPerWeek == 6) {
+                if ($w !== 0) {
+                    $workDays++;
+                }
+            } else {
+                $workDays++;
+            }
+        }
+
+        return $workDays;
+    }
+
+    public static function recalculateAllResourceUtilizations()
+    {
+        $db = \Config\Database::connect();
+        $settingsModel = new \App\Models\SettingsModel();
+        
+        $dailyHours = (float)$settingsModel->getSetting('daily_work_hours', 8);
+        $workDaysPerWeek = (int)$settingsModel->getSetting('work_days_per_week', 5);
+        $capacity = $dailyHours * $workDaysPerWeek;
+
+        $resourceModel = new \App\Models\ResourceModel();
+        $resources = $resourceModel->findAll();
+
+        foreach ($resources as $r) {
+            $subtasks = $db->table('project_phase_subtasks')
+                           ->where('resource_id', $r['id'])
+                           ->get()
+                           ->getResultArray();
+
+            $totalWeeklyLoad = 0.0;
+            foreach ($subtasks as $sub) {
+                // Skip completed tasks
+                if (in_array(strtolower($sub['status'] ?? ''), ['complete', 'completed', 'done'])) {
+                    continue;
+                }
+
+                $start = $sub['start'];
+                $end = $sub['end'];
+                $taskHours = (float)$sub['task_hours'];
+
+                if (!empty($start) && !empty($end)) {
+                    $workingDays = self::getWorkingDaysCount($start, $end, $workDaysPerWeek);
+                    $weeks = max(1.0, ceil($workingDays / (float)$workDaysPerWeek));
+                } else {
+                    $weeks = 1.0;
+                }
+
+                $totalWeeklyLoad += $taskHours / $weeks;
+            }
+
+            $utilization = 0;
+            if ($capacity > 0) {
+                $utilization = round(($totalWeeklyLoad / $capacity) * 100);
+            }
+
+            $resourceModel->update($r['id'], [
+                'utilization' => $utilization
+            ]);
+        }
+    }
+
+    private function addWorkDays($startDateStr, $daysToAdd, $workDaysPerWeek)
+    {
+        $current = new \DateTime($startDateStr);
+        if ($daysToAdd <= 0) {
+            return $current->format('Y-m-d');
+        }
+
+        $added = 0;
+        $target = $daysToAdd - 1;
+
+        while ($added < $target) {
+            $current->modify('+1 day');
+            $w = (int)$current->format('w'); // 0 = Sunday, 6 = Saturday
+            if ($workDaysPerWeek == 5) {
+                if ($w === 0 || $w === 6) {
+                    continue;
+                }
+            } elseif ($workDaysPerWeek == 6) {
+                if ($w === 0) {
+                    continue;
+                }
+            }
+            $added++;
+        }
+        return $current->format('Y-m-d');
+    }
+
+    private function getNextWorkDay($dateStr, $workDaysPerWeek)
+    {
+        $date = new \DateTime($dateStr);
+        $date->modify('+1 day');
+        if ($workDaysPerWeek == 5) {
+            $w = (int)$date->format('w');
+            if ($w === 6) {
+                $date->modify('+2 days');
+            } elseif ($w === 0) {
+                $date->modify('+1 day');
+            }
+        } elseif ($workDaysPerWeek == 6) {
+            $w = (int)$date->format('w');
+            if ($w === 0) {
+                $date->modify('+1 day');
+            }
+        }
+        return $date->format('Y-m-d');
+    }
+
+    private function recalculateSubtaskAndPhaseDates($phaseId)
     {
         $phaseModel = new PhaseModel();
         $subtaskModel = new \App\Models\SubtaskModel();
+        $settingsModel = new \App\Models\SettingsModel();
         
-        $subtasks = $subtaskModel->where('phase_id', $phaseId)->findAll();
+        $phase = $phaseModel->find($phaseId);
+        if (!$phase) {
+            return;
+        }
+        
+        $workDaysPerWeek = (int)$settingsModel->getSetting('work_days_per_week', 5);
+        $baseStartDate = $phase['start'] ?: date('Y-m-d');
+        
+        $subtasks = $subtaskModel->where('phase_id', $phaseId)
+                                 ->orderBy('sequence', 'ASC')
+                                 ->orderBy('id', 'ASC')
+                                 ->findAll();
+                                 
         if (count($subtasks) > 0) {
             $minStart = null;
             $maxEnd = null;
+            
             foreach ($subtasks as $sub) {
-                if ($minStart === null || $sub['start'] < $minStart) {
-                    $minStart = $sub['start'];
+                // Keep the subtask's own start date if available, otherwise default to phase start date
+                $subStart = $sub['start'] ?: $baseStartDate;
+                
+                $duration = (int)ceil((float)$sub['man_days']);
+                if ($duration <= 0) {
+                    $subEnd = $subStart;
+                } else {
+                    $subEnd = $this->addWorkDays($subStart, $duration, $workDaysPerWeek);
                 }
-                if ($maxEnd === null || $sub['end'] > $maxEnd) {
-                    $maxEnd = $sub['end'];
+                
+                $subtaskModel->update($sub['id'], [
+                    'start' => $subStart,
+                    'end'   => $subEnd
+                ]);
+                
+                if ($minStart === null || $subStart < $minStart) {
+                    $minStart = $subStart;
+                }
+                if ($maxEnd === null || $subEnd > $maxEnd) {
+                    $maxEnd = $subEnd;
                 }
             }
+            
             if ($minStart !== null && $maxEnd !== null) {
                 $phaseModel->update($phaseId, [
                     'start' => $minStart,
@@ -1220,17 +1563,37 @@ class Projects extends BaseController
         }
     }
 
+    private function recalculatePhaseDates($phaseId)
+    {
+        $this->recalculateSubtaskAndPhaseDates($phaseId);
+    }
+
     public function createSubtaskAjax($project_id, $phase_id) {
         $oldState = $this->getProjectState($project_id);
         $subtaskModel = new \App\Models\SubtaskModel();
         $name = $this->request->getPost('name');
         $description = $this->request->getPost('description') ?: '';
-        $start = $this->request->getPost('start') ?: date('Y-m-d');
-        $end = $this->request->getPost('end') ?: date('Y-m-d');
+        
+        $phaseModel = new PhaseModel();
+        $phase = $phaseModel->find($phase_id);
+        $start = $this->request->getPost('start') ?: ($phase ? $phase['start'] : date('Y-m-d'));
+        
         $status = $this->request->getPost('status') ?: 'backlog';
+        $man_days = $this->request->getPost('man_days') !== null ? (float)$this->request->getPost('man_days') : 0.0;
+        $task_hours = $this->request->getPost('task_hours') !== null ? (float)$this->request->getPost('task_hours') : 0.0;
+        $resource_id = $this->request->getPost('resource_id') ?: null;
 
         if (empty($name)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Subtask Name is required.']);
+        }
+
+        $settingsModel = new \App\Models\SettingsModel();
+        $workDaysPerWeek = (int)$settingsModel->getSetting('work_days_per_week', 5);
+        $duration = (int)ceil($man_days);
+        if ($duration <= 0) {
+            $end = $start;
+        } else {
+            $end = $this->addWorkDays($start, $duration, $workDaysPerWeek);
         }
 
         $maxSeq = $subtaskModel->where('phase_id', $phase_id)->selectMax('sequence')->first();
@@ -1243,14 +1606,16 @@ class Projects extends BaseController
             'start'       => $start,
             'end'         => $end,
             'status'      => $status,
-            'sequence'    => $nextSeq
+            'sequence'    => $nextSeq,
+            'man_days'    => $man_days,
+            'task_hours'  => $task_hours,
+            'resource_id' => $resource_id
         ]);
 
-        $phaseModel = new PhaseModel();
-        $phase = $phaseModel->find($phase_id);
         $phaseName = $phase ? $phase['name'] : "ID {$phase_id}";
 
-        $this->recalculatePhaseDates($phase_id);
+        $this->recalculateSubtaskAndPhaseDates($phase_id);
+        self::recalculateAllResourceUtilizations();
         $this->logProjectActivity($project_id, "Subtask Added: '{$name}' to Phase '{$phaseName}'", $oldState);
         $this->updateProjectProgress($project_id);
 
@@ -1267,12 +1632,23 @@ class Projects extends BaseController
 
         $name = $this->request->getPost('name');
         $description = $this->request->getPost('description') ?: '';
-        $start = $this->request->getPost('start') ?: date('Y-m-d');
-        $end = $this->request->getPost('end') ?: date('Y-m-d');
+        $start = $this->request->getPost('start') ?: $subtask['start'];
         $status = $this->request->getPost('status') ?: 'backlog';
+        $man_days = $this->request->getPost('man_days') !== null ? (float)$this->request->getPost('man_days') : 0.0;
+        $task_hours = $this->request->getPost('task_hours') !== null ? (float)$this->request->getPost('task_hours') : 0.0;
+        $resource_id = $this->request->getPost('resource_id') ?: null;
 
         if (empty($name)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Subtask Name is required.']);
+        }
+
+        $settingsModel = new \App\Models\SettingsModel();
+        $workDaysPerWeek = (int)$settingsModel->getSetting('work_days_per_week', 5);
+        $duration = (int)ceil($man_days);
+        if ($duration <= 0) {
+            $end = $start;
+        } else {
+            $end = $this->addWorkDays($start, $duration, $workDaysPerWeek);
         }
 
         $subtaskModel->update($id, [
@@ -1280,14 +1656,555 @@ class Projects extends BaseController
             'description' => $description,
             'start'       => $start,
             'end'         => $end,
-            'status'      => $status
+            'status'      => $status,
+            'man_days'    => $man_days,
+            'task_hours'  => $task_hours,
+            'resource_id' => $resource_id
         ]);
 
-        $this->recalculatePhaseDates($phase_id);
+        $this->recalculateSubtaskAndPhaseDates($phase_id);
+        self::recalculateAllResourceUtilizations();
         $this->logProjectActivity($project_id, "Subtask Updated: '{$name}'", $oldState);
         $this->updateProjectProgress($project_id);
 
         return $this->response->setJSON(['status' => 'success']);
+    }
+
+    public function echoCommand($project_id) {
+        // Double-check authentication and viewer role restriction
+        if (!session()->get('isLoggedIn')) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Unauthorized.']);
+        }
+        if (session()->get('role') === 'viewer') {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Access Denied: Viewer role is read-only.']);
+        }
+
+        $rawCommand = trim($this->request->getPost('command'));
+        if (empty($rawCommand)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Command is empty.']);
+        }
+
+        // Split by semicolon OR newline
+        $commands = preg_split('/[;\n]+/', $rawCommand);
+        $results = [];
+        $successCount = 0;
+        $errorCount = 0;
+
+        $db = \Config\Database::connect();
+        $db->transBegin();
+
+        $oldState = $this->getProjectState($project_id);
+        $phaseModel = new PhaseModel();
+        $subtaskModel = new \App\Models\SubtaskModel();
+
+        // Helper to normalize input dates from d-m-Y or Y-m-d to standard Y-m-d
+        $normalizeDate = function ($dateStr) {
+            $dateStr = trim($dateStr);
+            if (preg_match('/^\d{1,2}-\d{1,2}-\d{4}$/', $dateStr)) {
+                $parts = explode('-', $dateStr);
+                return sprintf('%04d-%02d-%02d', $parts[2], $parts[1], $parts[0]);
+            }
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateStr)) {
+                return $dateStr;
+            }
+            $time = strtotime($dateStr);
+            return $time ? date('Y-m-d', $time) : date('Y-m-d');
+        };
+
+        $settingsModel = new \App\Models\SettingsModel();
+        $workDaysPerWeek = (int)$settingsModel->getSetting('work_days_per_week', 5);
+        $dailyHours = (float)$settingsModel->getSetting('daily_work_hours', 8);
+
+        // Command regex patterns
+        $createPhaseRegex = '#^Create\s+a\s+phase\s+called\s+\[?([^\]\n]+)\]?\s+for\s+start\s+date\s+on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+to\s+end\s*(?:date\s+)?on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+with\s+status\s+\[?([^\]\n]+)\]?#i';
+        $createSubtaskRegex = '#^Create\s+a\s+subtask\s+on\s+\[?([^\]\n]+)\]?\s+called\s+\[?([^\]\n]+)\]?\s+for\s+start\s+date\s+on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+with\s+\[?([\d\.]+)\]?\s+mandays\s+assigned\s+to\s+\[?([^\]\n]*)\]?\s+with\s+status\s+\[?([^\]\n]+)\]?#i';
+        $updateRegex = '#^Update\s+\[?([^\]\n]+)\]?\s+start\s+date\s+on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+with\s+\[?([\d\.]+)\]?\s+mandays\s+assigned\s+to\s+\[?([^\]\n]*)\]?\s+with\s+status\s+\[?([^\]\n]+)\]?#i';
+        $updatePhaseRegex = '#^Update\s+\[?([^\]\n]+)\]?\s+start\s+date\s+on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+to\s+end\s*(?:date\s+)?on\s+\[?(\d{1,2}-\d{1,2}-\d{4}|\d{4}-\d{2}-\d{2})\]?\s+with\s+(?:the\s+)?status\s*(?:as\s+)?\[?([^\]\n]+)\]?#i';
+        $updateStatusOnlyRegex = '#^Update\s+\[?([^\]\n]+)\]?\s+with\s+(?:the\s+)?status\s*(?:as\s+)?\[?([^\]\n]+)\]?#i';
+        $assignResourceRegex = '@^Assign\s+resource\s+\[?([^\]\n]+)\]?\s+to\s+subtask\s+\[?#(\d+)\]?@i';
+        $unassignResourceRegex = '@^(?:Unassign|Remove)\s+resource\s+from\s+subtask\s+\[?#(\d+)\]?@i';
+
+        foreach ($commands as $cmd) {
+            $cmd = trim($cmd);
+            if (empty($cmd)) continue;
+
+            $executed = false;
+            $msg = '';
+
+            // 1. Create Phase
+            if (preg_match($createPhaseRegex, $cmd, $matches)) {
+                $name = trim($matches[1]);
+                $start = $normalizeDate($matches[2]);
+                $end = $normalizeDate($matches[3]);
+                $status = strtolower(trim($matches[4]));
+
+                $maxSeq = $phaseModel->where('project_id', $project_id)->selectMax('sequence')->first();
+                $nextSeq = isset($maxSeq['sequence']) ? $maxSeq['sequence'] + 1 : 0;
+
+                $phaseModel->insert([
+                    'project_id'  => $project_id,
+                    'name'        => $name,
+                    'description' => '',
+                    'start'       => $start,
+                    'end'         => $end,
+                    'status'      => $status,
+                    'sequence'    => $nextSeq
+                ]);
+
+                $this->logProjectActivity($project_id, "Phase Added via Echo: '{$name}' (Status: " . strtoupper($status) . ")", $oldState);
+                $msg = "Successfully created phase '{$name}'.";
+                $executed = true;
+            } 
+            // 2. Create Subtask
+            elseif (preg_match($createSubtaskRegex, $cmd, $matches)) {
+                $phaseSearch = trim($matches[1]);
+                $name = trim($matches[2]);
+                $start = $normalizeDate($matches[3]);
+                $man_days = (float)$matches[4];
+                $resourceSearch = trim($matches[5]);
+                $status = strtolower(trim($matches[6]));
+
+                $phase = $phaseModel->where('project_id', $project_id)->where('name', $phaseSearch)->first();
+                if (!$phase) {
+                    $phase = $phaseModel->where('project_id', $project_id)->like('name', $phaseSearch)->first();
+                }
+
+                if (!$phase) {
+                    $msg = "Error: Phase '{$phaseSearch}' not found in this project.";
+                    $errorCount++;
+                    $results[] = $msg;
+                    continue;
+                }
+
+                $resourceId = null;
+                if (!empty($resourceSearch) && !in_array(strtolower($resourceSearch), ['unassigned', 'none', 'no one', 'nobody'])) {
+                    $assignedResources = $db->table('resources r')
+                        ->select('r.*')
+                        ->join('resource_projects rp', 'r.id = rp.resource_id')
+                        ->where('rp.project_id', $project_id)
+                        ->get()
+                        ->getResultArray();
+
+                    foreach ($assignedResources as $res) {
+                        if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                            $resourceId = $res['id'];
+                            break;
+                        }
+                    }
+                    if (!$resourceId) {
+                        foreach ($assignedResources as $res) {
+                            if (stripos($res['name'], $resourceSearch) !== false) {
+                                $resourceId = $res['id'];
+                                break;
+                            }
+                        }
+                    }
+                    if (!$resourceId) {
+                        $resourceModel = new \App\Models\ResourceModel();
+                        $allRes = $resourceModel->findAll();
+                        foreach ($allRes as $res) {
+                            if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                                $resourceId = $res['id'];
+                                break;
+                            }
+                        }
+                        if (!$resourceId) {
+                            foreach ($allRes as $res) {
+                                if (stripos($res['name'], $resourceSearch) !== false) {
+                                    $resourceId = $res['id'];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!$resourceId) {
+                        $msg = "Error: Resource '{$resourceSearch}' not found.";
+                        $errorCount++;
+                        $results[] = $msg;
+                        continue;
+                    }
+                }
+
+                $phase_id = $phase['id'];
+                $maxSeq = $subtaskModel->where('phase_id', $phase_id)->selectMax('sequence')->first();
+                $nextSeq = isset($maxSeq['sequence']) ? $maxSeq['sequence'] + 1 : 0;
+
+                $duration = (int)ceil($man_days);
+                if ($duration <= 0) {
+                    $end = $start;
+                } else {
+                    $end = $this->addWorkDays($start, $duration, $workDaysPerWeek);
+                }
+                $task_hours = $man_days * $dailyHours;
+
+                $subtaskModel->insert([
+                    'phase_id'    => $phase_id,
+                    'name'        => $name,
+                    'description' => '',
+                    'start'       => $start,
+                    'end'         => $end,
+                    'status'      => $status,
+                    'sequence'    => $nextSeq,
+                    'man_days'    => $man_days,
+                    'task_hours'  => $task_hours,
+                    'resource_id' => $resourceId
+                ]);
+
+                $this->recalculateSubtaskAndPhaseDates($phase_id);
+                self::recalculateAllResourceUtilizations();
+                $this->logProjectActivity($project_id, "Subtask Added via Echo: '{$name}' to Phase '{$phase['name']}'", $oldState);
+                $msg = "Successfully created subtask '{$name}' under phase '{$phase['name']}'.";
+                $executed = true;
+            }
+            // 3. Update Subtask (Dates, Mandays, Resource, Status)
+            elseif (preg_match($updateRegex, $cmd, $matches)) {
+                $targetName = trim($matches[1]);
+                $start = $normalizeDate($matches[2]);
+                $man_days = (float)$matches[3];
+                $resourceSearch = trim($matches[4]);
+                $status = strtolower(trim($matches[5]));
+
+                $phases = $phaseModel->where('project_id', $project_id)->findAll();
+                $phaseIds = array_column($phases, 'id');
+
+                $targetSubtask = null;
+                if (!empty($phaseIds)) {
+                    if (preg_match('/^#(\d+)$/', $targetName, $idMatches)) {
+                        $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->find($idMatches[1]);
+                    } else {
+                        $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->where('name', $targetName)->first();
+                        if (!$targetSubtask) {
+                            $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->like('name', $targetName)->first();
+                        }
+                    }
+                }
+
+                if ($targetSubtask) {
+                    $resourceId = null;
+                    if (!empty($resourceSearch) && !in_array(strtolower($resourceSearch), ['unassigned', 'none', 'no one', 'nobody'])) {
+                        $assignedResources = $db->table('resources r')
+                            ->select('r.*')
+                            ->join('resource_projects rp', 'r.id = rp.resource_id')
+                            ->where('rp.project_id', $project_id)
+                            ->get()
+                            ->getResultArray();
+
+                        foreach ($assignedResources as $res) {
+                            if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                                $resourceId = $res['id'];
+                                break;
+                            }
+                        }
+                        if (!$resourceId) {
+                            foreach ($assignedResources as $res) {
+                                if (stripos($res['name'], $resourceSearch) !== false) {
+                                    $resourceId = $res['id'];
+                                    break;
+                                }
+                            }
+                        }
+                        if (!$resourceId) {
+                            $resourceModel = new \App\Models\ResourceModel();
+                            $allRes = $resourceModel->findAll();
+                            foreach ($allRes as $res) {
+                                if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                                    $resourceId = $res['id'];
+                                    break;
+                                }
+                            }
+                            if (!$resourceId) {
+                                foreach ($allRes as $res) {
+                                    if (stripos($res['name'], $resourceSearch) !== false) {
+                                        $resourceId = $res['id'];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!$resourceId) {
+                            $msg = "Error: Resource '{$resourceSearch}' not found.";
+                            $errorCount++;
+                            $results[] = $msg;
+                            continue;
+                        }
+                    }
+
+                    $duration = (int)ceil($man_days);
+                    if ($duration <= 0) {
+                        $end = $start;
+                    } else {
+                        $end = $this->addWorkDays($start, $duration, $workDaysPerWeek);
+                    }
+                    $task_hours = $man_days * $dailyHours;
+
+                    $subtaskModel->update($targetSubtask['id'], [
+                        'start'       => $start,
+                        'end'         => $end,
+                        'status'      => $status,
+                        'man_days'    => $man_days,
+                        'task_hours'  => $task_hours,
+                        'resource_id' => $resourceId
+                    ]);
+                    $this->recalculateSubtaskAndPhaseDates($targetSubtask['phase_id']);
+                    self::recalculateAllResourceUtilizations();
+                    $this->logProjectActivity($project_id, "Subtask Updated via Echo: '{$targetName}'", $oldState);
+                    $msg = "Successfully updated subtask '{$targetName}'.";
+                    $executed = true;
+                } else {
+                    $msg = "Error: Subtask '{$targetName}' not found in this project.";
+                    $errorCount++;
+                    $results[] = $msg;
+                    continue;
+                }
+            }
+            // 4. Assign resource to subtask by ID
+            elseif (preg_match($assignResourceRegex, $cmd, $matches)) {
+                $resourceSearch = trim($matches[1]);
+                $subtaskId = (int)$matches[2];
+
+                $phases = $phaseModel->where('project_id', $project_id)->findAll();
+                $phaseIds = array_column($phases, 'id');
+
+                $targetSubtask = null;
+                if (!empty($phaseIds)) {
+                    $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->find($subtaskId);
+                }
+
+                if (!$targetSubtask) {
+                    $msg = "Error: Subtask #{$subtaskId} not found in this project.";
+                    $errorCount++;
+                    $results[] = $msg;
+                    continue;
+                }
+
+                $resourceId = null;
+                if (!empty($resourceSearch) && !in_array(strtolower($resourceSearch), ['unassigned', 'none', 'no one', 'nobody'])) {
+                    $assignedResources = $db->table('resources r')
+                        ->select('r.*')
+                        ->join('resource_projects rp', 'r.id = rp.resource_id')
+                        ->where('rp.project_id', $project_id)
+                        ->get()
+                        ->getResultArray();
+
+                    foreach ($assignedResources as $res) {
+                        if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                            $resourceId = $res['id'];
+                            break;
+                        }
+                    }
+                    if (!$resourceId) {
+                        foreach ($assignedResources as $res) {
+                            if (stripos($res['name'], $resourceSearch) !== false) {
+                                $resourceId = $res['id'];
+                                break;
+                            }
+                        }
+                    }
+                    if (!$resourceId) {
+                        $resourceModel = new \App\Models\ResourceModel();
+                        $allRes = $resourceModel->findAll();
+                        foreach ($allRes as $res) {
+                            if (strcasecmp($res['name'], $resourceSearch) === 0) {
+                                $resourceId = $res['id'];
+                                break;
+                            }
+                        }
+                        if (!$resourceId) {
+                            foreach ($allRes as $res) {
+                                if (stripos($res['name'], $resourceSearch) !== false) {
+                                    $resourceId = $res['id'];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!$resourceId) {
+                        $msg = "Error: Resource '{$resourceSearch}' not found.";
+                        $errorCount++;
+                        $results[] = $msg;
+                        continue;
+                    }
+                }
+
+                $subtaskModel->update($targetSubtask['id'], [
+                    'resource_id' => $resourceId
+                ]);
+                self::recalculateAllResourceUtilizations();
+                $this->logProjectActivity($project_id, "Subtask #{$subtaskId} Assigned to '{$resourceSearch}' via Echo", $oldState);
+                $msg = "Successfully assigned resource '{$resourceSearch}' to subtask #{$subtaskId}.";
+                $executed = true;
+            }
+            // 5. Unassign resource from subtask by ID
+            elseif (preg_match($unassignResourceRegex, $cmd, $matches)) {
+                $subtaskId = (int)$matches[1];
+
+                $phases = $phaseModel->where('project_id', $project_id)->findAll();
+                $phaseIds = array_column($phases, 'id');
+
+                $targetSubtask = null;
+                if (!empty($phaseIds)) {
+                    $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->find($subtaskId);
+                }
+
+                if (!$targetSubtask) {
+                    $msg = "Error: Subtask #{$subtaskId} not found in this project.";
+                    $errorCount++;
+                    $results[] = $msg;
+                    continue;
+                }
+
+                $subtaskModel->update($targetSubtask['id'], [
+                    'resource_id' => null
+                ]);
+                self::recalculateAllResourceUtilizations();
+                $this->logProjectActivity($project_id, "Subtask #{$subtaskId} Unassigned via Echo", $oldState);
+                $msg = "Successfully unassigned resource from subtask #{$subtaskId}.";
+                $executed = true;
+            }
+            // 6. Update Phase (Dates & Status)
+            elseif (preg_match($updatePhaseRegex, $cmd, $matches)) {
+                $targetName = trim($matches[1]);
+                $start = $normalizeDate($matches[2]);
+                $end = $normalizeDate($matches[3]);
+                $status = strtolower(trim($matches[4]));
+
+                $targetPhase = $phaseModel->where('project_id', $project_id)->where('name', $targetName)->first();
+                if (!$targetPhase) {
+                    $targetPhase = $phaseModel->where('project_id', $project_id)->like('name', $targetName)->first();
+                }
+
+                if ($targetPhase) {
+                    $hasSubtasks = $subtaskModel->where('phase_id', $targetPhase['id'])->countAllResults() > 0;
+                    if ($hasSubtasks) {
+                        $phaseModel->update($targetPhase['id'], [
+                            'status' => $status
+                        ]);
+                        $this->logProjectActivity($project_id, "Phase Status Updated via Echo: '{$targetName}' to " . strtoupper($status), $oldState);
+                        $msg = "Successfully updated phase '{$targetName}' status to {$status}. Dates were not changed because the phase contains subtasks.";
+                        $executed = true;
+                    } else {
+                        $phaseModel->update($targetPhase['id'], [
+                            'start'  => $start,
+                            'end'    => $end,
+                            'status' => $status
+                        ]);
+                        $this->logProjectActivity($project_id, "Phase Updated via Echo: '{$targetName}'", $oldState);
+                        $msg = "Successfully updated phase '{$targetName}'.";
+                        $executed = true;
+                    }
+                } else {
+                    $msg = "Error: Phase '{$targetName}' not found in this project.";
+                    $errorCount++;
+                    $results[] = $msg;
+                    continue;
+                }
+            }
+            // 7. Update Status Only
+            elseif (preg_match($updateStatusOnlyRegex, $cmd, $matches)) {
+                $targetName = trim($matches[1]);
+                $status = strtolower(trim($matches[2]));
+
+                $phases = $phaseModel->where('project_id', $project_id)->findAll();
+                $phaseIds = array_column($phases, 'id');
+
+                $targetSubtask = null;
+                if (!empty($phaseIds)) {
+                    if (preg_match('/^#(\d+)$/', $targetName, $idMatches)) {
+                        $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->find($idMatches[1]);
+                    } else {
+                        $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->where('name', $targetName)->first();
+                        if (!$targetSubtask) {
+                            $targetSubtask = $subtaskModel->whereIn('phase_id', $phaseIds)->like('name', $targetName)->first();
+                        }
+                    }
+                }
+
+                if ($targetSubtask) {
+                    $subtaskModel->update($targetSubtask['id'], [
+                        'status' => $status
+                    ]);
+                    self::recalculateAllResourceUtilizations();
+                    $this->logProjectActivity($project_id, "Subtask Status Updated via Echo: '{$targetName}' to " . strtoupper($status), $oldState);
+                    $msg = "Successfully updated subtask '{$targetName}' status to {$status}.";
+                    $executed = true;
+                } else {
+                    $targetPhase = $phaseModel->where('project_id', $project_id)->where('name', $targetName)->first();
+                    if (!$targetPhase) {
+                        $targetPhase = $phaseModel->where('project_id', $project_id)->like('name', $targetName)->first();
+                    }
+
+                    if ($targetPhase) {
+                        $phaseModel->update($targetPhase['id'], [
+                            'status' => $status
+                        ]);
+                        $this->logProjectActivity($project_id, "Phase Status Updated via Echo: '{$targetName}' to " . strtoupper($status), $oldState);
+                        $msg = "Successfully updated phase '{$targetName}' status to {$status}.";
+                        $executed = true;
+                    } else {
+                        $msg = "Error: Phase or Subtask '{$targetName}' not found in this project.";
+                        $errorCount++;
+                        $results[] = $msg;
+                        continue;
+                    }
+                }
+            }
+
+            if ($executed) {
+                $successCount++;
+                $results[] = $msg;
+            } else {
+                $msg = "Error: Command not recognized: '{$cmd}'";
+                $errorCount++;
+                $results[] = $msg;
+            }
+        }
+
+        // Recalculate progress & statistics if any command was successful and transaction will commit
+        if ($errorCount > 0) {
+            $db->transRollback();
+            $summaryMessage = implode("\n", $results);
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => "Transaction rolled back due to error(s):\n" . $summaryMessage
+            ]);
+        } else {
+            $db->transCommit();
+            if ($successCount > 0) {
+                $this->updateProjectProgress($project_id);
+            }
+            $summaryMessage = implode("\n", $results);
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => empty($summaryMessage) ? 'No commands executed.' : $summaryMessage
+            ]);
+        }
+    }
+
+    public function toggleSubtaskAjax($project_id, $phase_id, $id) {
+        $subtaskModel = new \App\Models\SubtaskModel();
+        $subtask = $subtaskModel->find($id);
+        if (!$subtask) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Subtask not found.']);
+        }
+        
+        $oldState = $this->getProjectState($project_id);
+        
+        $currentStatus = strtolower($subtask['status']);
+        $newStatus = in_array($currentStatus, ['complete', 'completed', 'done']) ? 'backlog' : 'complete';
+        
+        $subtaskModel->update($id, [
+            'status' => $newStatus
+        ]);
+        
+        $this->recalculateSubtaskAndPhaseDates($phase_id);
+        self::recalculateAllResourceUtilizations();
+        $this->logProjectActivity($project_id, "Subtask status toggled to '" . strtoupper($newStatus) . "': '{$subtask['name']}'", $oldState);
+        $this->updateProjectProgress($project_id);
+        
+        return $this->response->setJSON([
+            'status' => 'success',
+            'newStatus' => $newStatus
+        ]);
     }
 
     public function deleteSubtaskAjax($id) {
@@ -1301,7 +2218,8 @@ class Projects extends BaseController
             $oldState = $projectId ? $this->getProjectState($projectId) : null;
             
             $subtaskModel->delete($id);
-            $this->recalculatePhaseDates($phaseId);
+            $this->recalculateSubtaskAndPhaseDates($phaseId);
+            self::recalculateAllResourceUtilizations();
             if ($projectId) {
                 $this->logProjectActivity($projectId, "Subtask Deleted: '{$subtask['name']}'", $oldState);
                 $this->updateProjectProgress($projectId);

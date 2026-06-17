@@ -2,33 +2,35 @@
 
 <?= $this->section('content') ?>
 <?php
-// PHP functions to help with timeline layout
-// PHP functions to help with timeline layout
-function getMonthIndex($dateStr) {
-    $time = strtotime($dateStr);
-    $year = (int)date('Y', $time);
-    $month = (int)date('n', $time) - 1; // 0-based
+function getSpanPct($startDateStr, $endDateStr) {
     $currentYear = (int)date('Y');
-    if ($year < $currentYear) return 0;
-    if ($year > $currentYear) return 11;
-    return $month;
+    $yearStart = strtotime("{$currentYear}-01-01");
+    $yearEnd = strtotime("{$currentYear}-12-31");
+    $total = $yearEnd - $yearStart;
+    
+    $start = strtotime($startDateStr);
+    $end = strtotime($endDateStr);
+    
+    $start = max($yearStart, min($yearEnd, $start));
+    $end = max($yearStart, min($yearEnd, $end));
+    
+    $left = (($start - $yearStart) / $total) * 100;
+    $width = (($end - $start) / $total) * 100;
+    
+    if ($width < 1) $width = 1;
+    return ['left' => $left, 'width' => $width];
 }
 
 $currentYear = (int)date('Y');
-$startMs = strtotime("{$currentYear}-01-01");
-$endMs = strtotime("{$currentYear}-12-31");
-$totalMs = $endMs - $startMs;
-$nowMs = time();
-$todayPct = null;
-if ($nowMs >= $startMs && $nowMs <= $endMs) {
-    $todayPct = (($nowMs - $startMs) / $totalMs) * 100;
+$todayLeft = null;
+$now = time();
+$yearStart = strtotime("{$currentYear}-01-01");
+$yearEnd = strtotime("{$currentYear}-12-31");
+if ($now >= $yearStart && $now <= $yearEnd) {
+    $todayLeft = (($now - $yearStart) / ($yearEnd - $yearStart)) * 100;
 }
 
 $months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
-$timelineMonths = [];
-foreach ($months as $m) {
-    $timelineMonths[] = ['label' => $m, 'year' => $currentYear, 'key' => "{$currentYear}-{$m}"];
-}
 
 // Gather action item reminders
 $overdueReminders = [];
@@ -69,10 +71,20 @@ $statusDefs = $db->tableExists('status_definitions') ? $db->table('status_defini
 
 $statusLabels = [];
 $statusBgs = [];
+$statusColors = [
+    'on-track' => 'oklch(0.62 0.14 155)',
+    'at-risk'  => 'oklch(0.78 0.16 80)',
+    'blocked'  => 'oklch(0.58 0.22 27)',
+    'delayed'  => 'oklch(0.65 0.18 35)',
+    'backlog'  => 'oklch(0.6 0.02 270)',
+];
 
 foreach ($statusDefs as $def) {
     $statusLabels[$def['status']] = $def['label'];
     $statusBgs[$def['status']] = 'bg-status-' . $def['status'];
+    if (!empty($def['color'])) {
+        $statusColors[$def['status']] = $def['color'];
+    }
 }
 
 foreach ($projStatuses as $ps) {
@@ -93,93 +105,107 @@ foreach ($defaultSlugs as $i => $s) {
 ?>
 
 <div class="min-h-screen">
-    <!-- Header -->
-    <header class="brutal-border-thick border-x-0 border-t-0 bg-background">
-        <div class="max-w-[1600px] mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-4">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-primary brutal-border-thick brutal-shadow-sm flex items-center justify-center mono font-black text-primary-foreground">
-                    ▣
-                </div>
-                <div>
-                    <div class="mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-                        Project Management Office
-                    </div>
-                    <h1 class="text-2xl md:text-3xl font-black uppercase tracking-tight">
-                        PORTFOLIO
-                    </h1>
-                </div>
+    <!-- Header Component -->
+    <header class="border-b border-ink/15 py-6 no-print cascade-in" style="animation-delay: 0ms;">
+        <div class="w-full px-8 lg:px-14 flex items-center justify-between gap-4">
+            <div>
+                <span class="eyebrow">Projects</span>
+                <h1 class="font-display text-2xl md:text-3xl font-black uppercase mt-1 tracking-tight">Atlas 2026</h1>
             </div>
             <div class="flex items-center gap-3">
-                <div class="brutal-border px-3 py-2 bg-card">
-                    <div class="mono text-[10px] uppercase tracking-widest text-muted-foreground">Projects</div>
-                    <div class="mono text-lg font-black"><?= str_pad($total, 2, '0', STR_PAD_LEFT) ?></div>
-                </div>
-                <div class="brutal-border px-3 py-2 bg-card">
-                    <div class="mono text-[10px] uppercase tracking-widest text-muted-foreground">Window</div>
-                    <div class="mono text-lg font-black">12 MO</div>
-                </div>
+                <!-- Logged in status -->
+                <?php if (session()->get('isLoggedIn')): ?>
+                    <div class="text-right">
+                        <span class="mono text-[10px] text-muted-foreground uppercase"><?= esc(session()->get('role')) ?></span>
+                        <div class="mono text-xs font-bold uppercase"><?= esc(session()->get('name')) ?></div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </header>
 
-    <main class="max-w-[1600px] mx-auto px-6 py-8 space-y-10">
-        
-        <!-- Status Overview -->
-        <section>
-            <div class="flex items-end justify-between gap-4 mb-4 flex-wrap">
-                <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 bg-primary brutal-border"></div>
-                    <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Status Overview</h2>
+    <section class="w-full px-8 lg:px-14">
+        <!-- Editorial lead -->
+        <div class="grid grid-cols-12 gap-6 py-8">
+            <div class="col-span-12 lg:col-span-7 cascade-in" style="animation-delay: 50ms;">
+                <p class="font-display text-[clamp(1.4rem,2vw,2rem)] leading-tight tracking-tight">
+                    A working register of every initiative shaping 2026 at a glance.
+                </p>
+            </div>
+            <div class="col-span-12 lg:col-span-5 lg:pl-10 lg:border-l border-ink/15 cascade-in" style="animation-delay: 100ms;">
+                <div class="grid grid-cols-3 gap-6">
+                    <div>
+                        <div class="eyebrow">Projects</div>
+                        <div class="font-display text-4xl mt-1"><?= $total ?></div>
+                    </div>
+                    <div>
+                        <div class="eyebrow">In flight</div>
+                        <?php 
+                        $inFlight = 0;
+                        foreach ($projects as $pr) {
+                            if ($pr['status'] !== 'backlog') $inFlight++;
+                        }
+                        ?>
+                        <div class="font-display text-4xl mt-1"><?= $inFlight ?></div>
+                    </div>
+                    <div>
+                        <div class="eyebrow">At risk</div>
+                        <?php 
+                        $atRisk = 0;
+                        foreach ($projects as $pr) {
+                            if (in_array($pr['status'], ['at-risk', 'blocked', 'delayed'])) $atRisk++;
+                        }
+                        ?>
+                        <div class="font-display text-4xl mt-1"><?= $atRisk ?></div>
+                    </div>
                 </div>
-                <span class="mono text-[10px] uppercase tracking-widest text-muted-foreground">Click a tile to filter the portfolio.</span>
             </div>
+        </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
-                <!-- ALL -->
-                <a href="?filter=all" class="brutal-border-thick p-2 text-left brutal-hover bg-foreground text-background <?= $filter === 'all' ? 'translate-x-[-2px] translate-y-[-2px] shadow-[4px_4px_0_0_var(--color-primary)]' : '' ?>">
-                    <div class="mono text-[9px] font-black uppercase tracking-widest opacity-80">ALL</div>
-                    <div class="mono text-2xl font-black mt-1 tabular-nums"><?= str_pad($total, 2, '0', STR_PAD_LEFT) ?></div>
-                </a>
-
-                <?php foreach (array_keys($statusLabels) as $s): ?>
-                    <a href="?filter=<?= $s ?>" class="brutal-border-thick p-2 text-left brutal-hover <?= $statusBgs[$s] ?? 'bg-status-' . $s ?> text-background <?= $filter === $s ? 'translate-x-[-2px] translate-y-[-2px] shadow-[4px_4px_0_0_var(--color-primary)]' : '' ?>">
-                        <div class="mono text-[9px] font-black uppercase tracking-widest opacity-80"><?= $statusLabels[$s] ?? strtoupper($s) ?></div>
-                        <div class="mono text-2xl font-black mt-1 tabular-nums"><?= str_pad($counts[$s] ?? 0, 2, '0', STR_PAD_LEFT) ?></div>
+        <!-- Status filter strip -->
+        <div class="flex flex-wrap items-center gap-2 py-4 border-y border-ink/15 cascade-in" style="animation-delay: 150ms;">
+            <span class="eyebrow mr-2">Filter</span>
+            <a href="?filter=all" class="group flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-mono uppercase tracking-widest transition-all whitespace-nowrap <?= $filter === 'all' ? 'bg-ink text-paper border-ink' : 'bg-transparent text-ink border-ink/25 hover:border-ink/60' ?>">
+                <span class="h-2 w-2 rounded-full bg-foreground"></span>
+                ALL
+                <span class="ml-1 <?= $filter === 'all' ? 'text-paper/70' : 'text-ink/40' ?>"><?= $total ?></span>
+            </a>
+            <?php foreach (array_keys($statusLabels) as $s): ?>
+                <?php if (($counts[$s] ?? 0) > 0 || $filter === $s): ?>
+                    <a href="?filter=<?= $s ?>" class="group flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-mono uppercase tracking-widest transition-all whitespace-nowrap <?= $filter === $s ? 'bg-ink text-paper border-ink' : 'bg-transparent text-ink border-ink/25 hover:border-ink/60' ?>">
+                        <span class="h-2 w-2 rounded-full shrink-0" style="background: <?= $statusColors[$s] ?? '#6B7280' ?>"></span>
+                        <span class="truncate max-w-[120px]" title="<?= esc($statusLabels[$s] ?? strtoupper($s)) ?>">
+                            <?= $statusLabels[$s] ?? strtoupper($s) ?>
+                        </span>
+                        <span class="ml-1 shrink-0 <?= $filter === $s ? 'text-paper/70' : 'text-ink/40' ?>"><?= $counts[$s] ?? 0 ?></span>
                     </a>
-                <?php endforeach; ?>
-            </div>
-        </section>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
 
         <!-- Action Item Reminders -->
         <?php if (!empty($overdueReminders) || !empty($dueTodayReminders) || !empty($dueSoonReminders)): ?>
-        <section class="animate-fade-in">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-4 h-4 bg-primary brutal-border"></div>
-                <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight font-bold">Action Item Reminders</h2>
-                <div class="flex-1 h-[2px] bg-border"></div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Overdue Reminders -->
-                <div class="brutal-border-thick bg-card p-4 flex flex-col">
-                    <div class="flex items-center justify-between border-b border-foreground pb-2 mb-3">
-                        <span class="mono text-xs font-black text-destructive uppercase tracking-widest flex items-center gap-1">
-                            <i data-lucide="alert-octagon" class="w-4 h-4 text-destructive"></i> Overdue (<?= count($overdueReminders) ?>)
-                        </span>
-                    </div>
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+        <div class="py-6 border-b border-ink/15 cascade-in" style="animation-delay: 200ms;">
+            <h3 class="font-display text-xl mb-4">Action Item Reminders</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Overdue -->
+                <div class="rounded-2xl border border-ink/15 bg-white dark:bg-card/70 p-5 shadow-sm">
+                    <span class="eyebrow text-destructive flex items-center gap-1.5 mb-3">
+                        <i data-lucide="alert-octagon" class="w-4 h-4"></i> Overdue (<?= count($overdueReminders) ?>)
+                    </span>
+                    <div class="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
                         <?php if (empty($overdueReminders)): ?>
-                            <div class="mono text-[10px] text-muted-foreground uppercase py-2">No overdue action items.</div>
+                            <div class="text-xs text-muted-foreground uppercase py-2 font-mono">No overdue items.</div>
                         <?php else: ?>
                             <?php foreach ($overdueReminders as $r): ?>
-                                <div class="border border-destructive/40 bg-destructive/5 p-2 mono text-[10px] uppercase">
-                                    <div class="flex justify-between font-black text-destructive">
-                                        <span class="truncate max-w-[150px]"><?= esc($r['title']) ?></span>
-                                        <span><?= sys_date($r['due']) ?></span>
+                                <div class="border-b border-ink/10 pb-2 last:border-b-0">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-display text-sm font-bold text-destructive"><?= esc($r['title']) ?></span>
+                                        <span class="mono text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded"><?= $r['due'] ?></span>
                                     </div>
-                                    <div class="text-muted-foreground mt-1 flex justify-between">
+                                    <div class="text-[10px] font-mono text-muted-foreground mt-1 flex justify-between">
                                         <span>Owner: <?= esc($r['owner']) ?></span>
-                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-foreground hover:text-primary"><?= esc($r['project_code']) ?></a>
+                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-ink"><?= esc($r['project_code']) ?></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -187,26 +213,24 @@ foreach ($defaultSlugs as $i => $s) {
                     </div>
                 </div>
 
-                <!-- Due Today Reminders -->
-                <div class="brutal-border-thick bg-card p-4 flex flex-col">
-                    <div class="flex items-center justify-between border-b border-foreground pb-2 mb-3">
-                        <span class="mono text-xs font-black text-status-atrisk uppercase tracking-widest flex items-center gap-1">
-                            <i data-lucide="clock" class="w-4 h-4 text-status-atrisk"></i> Due Today (<?= count($dueTodayReminders) ?>)
-                        </span>
-                    </div>
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <!-- Due Today -->
+                <div class="rounded-2xl border border-ink/15 bg-white dark:bg-card/70 p-5 shadow-sm">
+                    <span class="eyebrow text-status-atrisk flex items-center gap-1.5 mb-3">
+                        <i data-lucide="clock" class="w-4 h-4"></i> Due Today (<?= count($dueTodayReminders) ?>)
+                    </span>
+                    <div class="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
                         <?php if (empty($dueTodayReminders)): ?>
-                            <div class="mono text-[10px] text-muted-foreground uppercase py-2">No items due today.</div>
+                            <div class="text-xs text-muted-foreground uppercase py-2 font-mono">No items due today.</div>
                         <?php else: ?>
                             <?php foreach ($dueTodayReminders as $r): ?>
-                                <div class="border border-foreground/30 bg-secondary/20 p-2 mono text-[10px] uppercase">
-                                    <div class="flex justify-between font-black text-foreground">
-                                        <span class="truncate max-w-[150px]"><?= esc($r['title']) ?></span>
-                                        <span>TODAY</span>
+                                <div class="border-b border-ink/10 pb-2 last:border-b-0">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-display text-sm font-bold text-ink"><?= esc($r['title']) ?></span>
+                                        <span class="mono text-[10px] bg-ink text-paper px-1.5 py-0.5 rounded">TODAY</span>
                                     </div>
-                                    <div class="text-muted-foreground mt-1 flex justify-between">
+                                    <div class="text-[10px] font-mono text-muted-foreground mt-1 flex justify-between">
                                         <span>Owner: <?= esc($r['owner']) ?></span>
-                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-foreground hover:text-primary"><?= esc($r['project_code']) ?></a>
+                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-ink"><?= esc($r['project_code']) ?></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -214,26 +238,24 @@ foreach ($defaultSlugs as $i => $s) {
                     </div>
                 </div>
 
-                <!-- Due Soon Reminders -->
-                <div class="brutal-border-thick bg-card p-4 flex flex-col">
-                    <div class="flex items-center justify-between border-b border-foreground pb-2 mb-3">
-                        <span class="mono text-xs font-black text-primary uppercase tracking-widest flex items-center gap-1">
-                            <i data-lucide="calendar" class="w-4 h-4 text-primary"></i> Due Soon (<?= count($dueSoonReminders) ?>)
-                        </span>
-                    </div>
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <!-- Due Soon -->
+                <div class="rounded-2xl border border-ink/15 bg-white dark:bg-card/70 p-5 shadow-sm">
+                    <span class="eyebrow flex items-center gap-1.5 mb-3">
+                        <i data-lucide="calendar" class="w-4 h-4"></i> Due Soon (<?= count($dueSoonReminders) ?>)
+                    </span>
+                    <div class="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
                         <?php if (empty($dueSoonReminders)): ?>
-                            <div class="mono text-[10px] text-muted-foreground uppercase py-2">No items due soon.</div>
+                            <div class="text-xs text-muted-foreground uppercase py-2 font-mono">No items due soon.</div>
                         <?php else: ?>
                             <?php foreach ($dueSoonReminders as $r): ?>
-                                <div class="border border-foreground/30 bg-background p-2 mono text-[10px] uppercase">
-                                    <div class="flex justify-between font-black text-foreground">
-                                        <span class="truncate max-w-[150px]"><?= esc($r['title']) ?></span>
-                                        <span><?= sys_date($r['due']) ?></span>
+                                <div class="border-b border-ink/10 pb-2 last:border-b-0">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-display text-sm font-bold text-ink"><?= esc($r['title']) ?></span>
+                                        <span class="mono text-[10px] text-muted-foreground"><?= $r['due'] ?></span>
                                     </div>
-                                    <div class="text-muted-foreground mt-1 flex justify-between">
+                                    <div class="text-[10px] font-mono text-muted-foreground mt-1 flex justify-between">
                                         <span>Owner: <?= esc($r['owner']) ?></span>
-                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-foreground hover:text-primary"><?= esc($r['project_code']) ?></a>
+                                        <a href="<?= base_url('project/' . $r['project_id']) ?>" class="underline text-ink"><?= esc($r['project_code']) ?></a>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -241,252 +263,118 @@ foreach ($defaultSlugs as $i => $s) {
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
         <?php endif; ?>
 
-        <!-- Graphical Timeline -->
-        <section>
-            <div class="flex items-end justify-between gap-4 mb-4 flex-wrap">
-                <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 bg-primary brutal-border"></div>
-                    <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight">Graphical Timeline</h2>
-                </div>
-                <span class="mono text-[10px] uppercase tracking-widest text-muted-foreground">Phase bars spanning the months they are scheduled for. Click any row to open detail.</span>
+        <!-- Year Gantt Timeline -->
+        <div class="py-8 cascade-in" style="animation-delay: 250ms;">
+            <div class="flex items-end justify-between mb-4">
+                <h2 class="font-display text-2xl tracking-tight">Timeline / <?= $currentYear ?></h2>
+                <span class="eyebrow">Project spans</span>
             </div>
 
-            <!-- SVG Timeline Grid -->
-            <div class="brutal-border-thick bg-card overflow-x-auto">
-                <div class="min-w-[1400px]">
-                    
-                    <!-- Year Headers -->
-                    <div class="grid grid-cols-[260px_repeat(12,minmax(48px,1fr))] border-b border-foreground relative">
-                        <div class="brutal-border-thick border-0 border-r p-3 bg-primary text-primary-foreground mono text-xs uppercase tracking-widest font-bold">
-                            Project / Timeline
-                        </div>
-                        <div class="col-span-12 p-2 mono text-xs uppercase tracking-widest text-center bg-secondary">// <?= $currentYear ?></div>
-                        
-                        <?php if ($todayPct !== null): ?>
-                            <div class="absolute top-1/2 -translate-y-1/2 pointer-events-none z-20" style="left: calc(260px + (100% - 260px) * <?= $todayPct / 100 ?>); transform: translate(-50%, -50%)">
-                                <span class="mono text-[9px] font-black uppercase tracking-widest bg-primary text-primary-foreground px-1.5 py-0.5 border border-foreground whitespace-nowrap">
-                                    ▼ TODAY
+            <div class="rounded-2xl border border-ink/15 bg-white dark:bg-card/70 overflow-hidden shadow-sm">
+                <!-- Month scale -->
+                <div class="grid grid-cols-[220px_1fr] border-b border-ink/15 bg-white dark:bg-card/70">
+                    <div class="px-5 py-3 eyebrow border-r border-ink/10">Project</div>
+                    <div class="relative grid grid-cols-12">
+                        <?php foreach ($months as $i => $m): ?>
+                            <div class="px-3 py-3 text-[11px] font-mono uppercase tracking-widest border-r border-ink/10 last:border-r-0">
+                                <span class="text-ink/80"><?= $m ?></span>
+                                <span class="ml-1 text-ink/35">26</span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <ul>
+                    <?php if (empty($projects)): ?>
+                        <li class="p-8 text-center text-muted-foreground uppercase font-mono text-xs">No projects match the active filter.</li>
+                    <?php else: ?>
+                        <?php foreach ($projects as $idx => $p): 
+                            $span = getSpanPct($p['startDate'], $p['endDate']);
+                            $statusColorVal = $statusColors[$p['status']] ?? 'var(--muted)';
+                        ?>
+                            <li class="grid grid-cols-[220px_1fr] items-stretch border-b border-ink/10 last:border-b-0 group">
+                                <a href="<?= base_url('project/' . $p['id']) ?>" class="px-5 py-4 border-r border-ink/10 flex flex-col gap-1 hover:bg-ink/[0.03] transition-colors bg-white dark:bg-card/70">
+                                    <span class="font-mono text-[10px] tracking-widest text-muted-foreground"><?= $p['code'] ?></span>
+                                    <span class="font-display text-[15px] leading-tight font-bold"><?= esc($p['name']) ?></span>
+                                    <span class="text-xs text-muted-foreground truncate"><?= esc($p['owner']) ?> · <?= esc($p['squad']) ?></span>
+                                </a>
+                                <div class="relative h-[68px] bg-white dark:bg-card/70">
+                                    <!-- month grid -->
+                                    <div class="absolute inset-0 grid grid-cols-12 pointer-events-none">
+                                        <?php for ($i = 0; $i < 12; $i++): ?>
+                                            <div class="border-r border-ink/[0.06] last:border-r-0"></div>
+                                        <?php endfor; ?>
+                                    </div>
+                                    <?php if ($todayLeft !== null): ?>
+                                        <div class="absolute top-0 bottom-0 w-px bg-ink" style="left: <?= $todayLeft ?>%">
+                                            <span class="absolute -top-1 -translate-x-1/2 w-2 h-2 rounded-full bg-ink" />
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="absolute top-1/2 -translate-y-1/2 h-7 rounded-full border border-ink/20 overflow-hidden shadow-sm"
+                                         style="left: <?= $span['left'] ?>%; width: <?= $span['width'] ?>%; background: var(--card);"
+                                         title="<?= esc($p['name']) ?> (<?= $p['startDate'] ?> to <?= $p['endDate'] ?>)">
+                                        <div class="h-full" style="width: <?= $p['progress'] ?>%; background: color-mix(in oklab, <?= $statusColorVal ?> 70%, transparent)"></div>
+                                        <div class="absolute inset-0 flex items-center justify-between px-3 text-[10px] font-mono uppercase tracking-widest font-bold"
+                                             style="color: color-mix(in oklab, var(--ink) 80%, transparent)">
+                                            <span><?= $statusLabels[$p['status']] ?? strtoupper($p['status']) ?></span>
+                                            <span><?= $p['progress'] ?>%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+
+        <div class="py-12">
+            <h2 class="font-display text-2xl tracking-tight mb-6 cascade-in" style="animation-delay: 280ms;">Index</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <?php foreach ($projects as $idx => $p): ?>
+                    <a href="<?= base_url('project/' . $p['id']) ?>" 
+                       class="bg-white block rounded-2xl border border-ink/15 bg-card/70 backdrop-blur p-5 hover:border-ink/60 transition-all group shadow-sm flex flex-col justify-between min-h-[180px] cascade-in"
+                       style="animation-delay: <?= 300 + $idx * 30 ?>ms;">
+                        <div>
+                            <div class="flex items-start justify-between gap-4">
+                                <span class="font-mono text-[10px] tracking-widest text-muted-foreground mt-1"><?= $p['code'] ?></span>
+                                <span class="inline-flex items-center gap-1.5 rounded-full border border-ink/10 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest font-bold bg-card/80 backdrop-blur whitespace-nowrap shadow-sm">
+                                    <span class="h-1.5 w-1.5 rounded-full animate-pulse" style="background: <?= $statusColors[$p['status']] ?? '#6B7280' ?>"></span>
+                                    <?= $statusLabels[$p['status']] ?? strtoupper($p['status']) ?>
                                 </span>
                             </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Month Headers -->
-                    <div class="grid grid-cols-[260px_repeat(12,minmax(48px,1fr))] border-b border-foreground">
-                        <div class="border-r border-foreground p-2 mono text-[10px] uppercase tracking-widest text-muted-foreground">Bar = phase span</div>
-                        <?php foreach ($timelineMonths as $index => $m): ?>
-                            <div class="p-2 mono text-[10px] uppercase tracking-widest text-center text-muted-foreground border-r border-foreground/40 last:border-r-0">
-                                <?= $m['label'] ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <!-- Timeline Content Row -->
-                    <div class="relative">
-                        <!-- Today Line -->
-                        <?php if ($todayPct !== null): ?>
-                            <div class="absolute top-0 bottom-0 w-[2px] bg-primary z-10 pointer-events-none" style="left: calc(260px + (100% - 260px) * <?= $todayPct / 100 ?>); transform: translateX(-1px)"></div>
-                        <?php endif; ?>
-
-                        <?php foreach ($projects as $p): ?>
-                            <?php
-                            $startIdx = getMonthIndex($p['startDate']);
-                            $endIdx = getMonthIndex($p['endDate']);
-                            $span = max(1, $endIdx - $startIdx + 1);
-                            ?>
-                            <a href="<?= base_url('project/' . $p['id']) ?>" class="grid grid-cols-[260px_repeat(12,minmax(48px,1fr))] border-b border-foreground w-full text-left hover:bg-secondary/40 transition-colors">
-                                
-                                <!-- Project Details (Left Column) -->
-                                <div class="border-r border-foreground p-3 flex flex-col gap-1">
-                                    <?php
-                                    $hasOpenRisks = false;
-                                    foreach ($p['risks'] as $risk) {
-                                        if (empty($risk['status']) || $risk['status'] === 'active') {
-                                            $hasOpenRisks = true;
-                                            break;
-                                        }
-                                    }
-
-                                    $hasActiveEscalations = false;
-                                    foreach ($p['escalations'] as $esc) {
-                                        if (empty($esc['status']) || $esc['status'] === 'active') {
-                                            $hasActiveEscalations = true;
-                                            break;
-                                        }
-                                    }
-                                    ?>
-                                    <div class="flex items-center justify-between gap-2">
-                                        <span class="mono text-[10px] text-muted-foreground uppercase tracking-widest"><?= $p['code'] ?></span>
-                                        <span class="mono text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 border border-foreground text-background <?= $statusBgs[$p['status']] ?? 'bg-status-' . $p['status'] ?> whitespace-nowrap">
-                                            <?= $statusLabels[$p['status']] ?? strtoupper($p['status']) ?>
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                        <span class="font-bold text-sm uppercase tracking-tight truncate flex-1" title="<?= esc($p['name']) ?>"><?= esc($p['name']) ?></span>
-                                        <?php if ($hasActiveEscalations): ?>
-                                            <i data-lucide="shield-alert" class="w-4 h-4 text-destructive animate-pulse shrink-0" title="Active Escalation"></i>
-                                        <?php endif; ?>
-                                        <?php if ($hasOpenRisks): ?>
-                                            <i data-lucide="alert-triangle" class="w-4 h-4 text-status-atrisk shrink-0" title="Open Risks"></i>
-                                        <?php endif; ?>
-                                    </div>
-                                    <span class="mono text-[10px] text-muted-foreground"><?= esc($p['owner']) ?> · <?= esc($p['squad']) ?></span>
-                                </div>
-
-                                <!-- Phase Bar Track (Right 12 Columns) -->
-                                <div class="[grid-column:span_12] relative grid h-[72px]" style="grid-template-columns: repeat(12, minmax(0, 1fr))">
-                                    <?php for ($i = 0; $i < 12; $i++): ?>
-                                        <div class="border-r border-foreground/30 last:border-r-0"></div>
-                                    <?php endfor; ?>
-
-                                    <!-- Left highlight bar -->
-                                    <div class="absolute left-0 top-0 bottom-0 w-1 <?= $statusBgs[$p['status']] ?? 'bg-status-' . $p['status'] ?>"></div>
-
-                                    <!-- Phase spans -->
-                                    <?php foreach ($p['phases'] as $phase): ?>
-                                        <?php
-                                        $s = getMonthIndex($phase['start']);
-                                        $e = getMonthIndex($phase['end']);
-                                        $left = ($s / 12) * 100;
-                                        $width = (($e - $s + 1) / 12) * 100;
-                                        ?>
-                                        <div class="absolute top-1/2 -translate-y-1/2 h-7 <?= $statusBgs[$phase['status']] ?? 'bg-status-' . $phase['status'] ?> border border-foreground flex items-center px-2 z-10" style="left: <?= $left ?>%; width: <?= $width ?>%" title="<?= esc($phase['name']) ?> • <?= sys_date($phase['start']) ?> → <?= sys_date($phase['end']) ?> • <?= $statusLabels[$phase['status']] ?? strtoupper($phase['status']) ?>">
-                                            <span class="mono text-[10px] font-bold text-background uppercase tracking-tight truncate">
-                                                <?= esc($phase['name']) ?>
-                                            </span>
-                                        </div>
-                                    <?php endforeach; ?>
-
-                                    <!-- Underline representing total project span -->
-                                    <div class="absolute bottom-1 h-[3px] bg-foreground/60" style="left: <?= ($startIdx / 12) * 100 ?>%; width: <?= ($span / 12) * 100 ?>%"></div>
-                                </div>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Legend -->
-            <div class="flex flex-wrap gap-3 mt-3 mono text-[10px] uppercase tracking-widest">
-                <?php foreach ($statusLabels as $status => $label): ?>
-                    <div class="flex items-center gap-2">
-                        <div class="w-4 h-4 border border-foreground <?= $statusBgs[$status] ?? 'bg-status-' . $status ?>"></div>
-                        <span class="text-muted-foreground"><?= $label ?></span>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </section>
-
-        <!-- Project Cards List -->
-        <section>
-            <div class="flex items-end justify-between gap-4 mb-4 flex-wrap">
-                <div class="flex items-center gap-3">
-                    <div class="w-4 h-4 bg-primary brutal-border"></div>
-                    <h2 class="text-xl md:text-2xl font-black uppercase tracking-tight font-bold">
-                        <?= $filter === 'all' ? 'All Projects' : 'Filtered: ' . ($statusLabels[$filter] ?? strtoupper($filter)) ?>
-                    </h2>
-                </div>
-                <span class="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <?= count($projects) ?> of <?= $total ?> projects
-                </span>
-            </div>
-
-            <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <?php foreach ($projects as $p): ?>
-                    <?php
-                    $openActions = 0;
-                    foreach ($p['actionItems'] as $a) {
-                        if ($a['done'] == 0) $openActions++;
-                    }
-                    ?>
-                    <a href="<?= base_url('project/' . $p['id']) ?>" class="text-left brutal-border-thick bg-card p-5 brutal-hover block">
-                        <?php
-                        $hasOpenRisks = false;
-                        foreach ($p['risks'] as $risk) {
-                            if (empty($risk['status']) || $risk['status'] === 'active') {
-                                $hasOpenRisks = true;
-                                break;
-                            }
-                        }
-
-                        $hasActiveEscalations = false;
-                        foreach ($p['escalations'] as $esc) {
-                            if (empty($esc['status']) || $esc['status'] === 'active') {
-                                $hasActiveEscalations = true;
-                                break;
-                            }
-                        }
-                        ?>
-                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <h3 class="font-display text-xl mt-3 leading-tight font-black uppercase text-ink group-hover:text-primary transition-colors"><?= esc($p['name']) ?></h3>
+                            <p class="text-xs text-muted-foreground mt-1"><?= esc($p['owner']) ?> · Squad: <span class="font-bold"><?= esc($p['squad']) ?></span></p>
+                        </div>
+                        <div class="mt-5 flex items-end justify-between border-t border-ink/10 pt-3">
                             <div>
-                                <div class="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                                    <?= $p['code'] ?>
-                                </div>
-                                <div class="flex items-center gap-1.5 mt-1 min-w-0">
-                                    <h3 class="font-black uppercase tracking-tight text-lg leading-tight truncate flex-1" title="<?= esc($p['name']) ?>">
-                                        <?= esc($p['name']) ?>
-                                    </h3>
-                                    <?php if ($hasActiveEscalations): ?>
-                                        <i data-lucide="shield-alert" class="w-4.5 h-4.5 text-destructive animate-pulse shrink-0" title="Active Escalation"></i>
-                                    <?php endif; ?>
-                                    <?php if ($hasOpenRisks): ?>
-                                        <i data-lucide="alert-triangle" class="w-4.5 h-4.5 text-status-atrisk shrink-0" title="Open Risks"></i>
-                                    <?php endif; ?>
+                                <div class="eyebrow">Progress / Health</div>
+                                <div class="font-display text-2xl font-bold mt-1">
+                                    <?= $p['progress'] ?><span class="text-base text-muted-foreground">%</span>
+                                    <span class="text-xs font-mono font-normal block text-muted-foreground truncate max-w-[200px]" title="<?= esc($p['health']) ?>"><?= esc($p['health']) ?></span>
                                 </div>
                             </div>
-                            <span class="mono text-[10px] font-bold uppercase tracking-widest px-2 py-1 border border-foreground text-background <?= $statusBgs[$p['status']] ?? 'bg-status-' . $p['status'] ?> whitespace-nowrap">
-                                <?= $statusLabels[$p['status']] ?? strtoupper($p['status']) ?>
-                            </span>
-                        </div>
-                        <div class="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-                            Owner — <?= esc($p['owner']) ?>
-                        </div>
-                        <div class="mono text-[10px] uppercase tracking-widest mb-3">
-                            Squad — <span class="font-black"><?= esc($p['squad']) ?></span>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 mb-3">
-                            <div class="flex-1 h-2 brutal-border bg-background">
-                                <div class="h-full bg-primary" style="width: <?= $p['progress'] ?>%"></div>
+                            <div class="flex items-center justify-center h-8 w-8 rounded-full bg-secondary text-ink group-hover:bg-ink group-hover:text-paper transition-all">
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                             </div>
-                            <span class="mono text-[10px] font-bold"><?= $p['progress'] ?>%</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                            <div>
-                                <div>Start</div>
-                                <div class="text-foreground mt-1"><?= sys_date($p['startDate']) ?></div>
-                            </div>
-                            <div>
-                                <div>End</div>
-                                <div class="text-foreground mt-1"><?= sys_date($p['endDate']) ?></div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap gap-2 mt-4">
-                            <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border border-foreground bg-background"><?= count($p['phases']) ?> phases</span>
-                            <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border border-foreground bg-background"><?= count($p['dependencies']) ?> deps</span>
-                            <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border border-foreground bg-background"><?= $openActions ?> open actions</span>
-                            <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border border-foreground bg-background"><?= count($p['risks']) ?> risk/iss</span>
-                            <?php if (count($p['escalations']) > 0): ?>
-                                <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border border-foreground bg-destructive text-destructive-foreground"><?= count($p['escalations']) ?> escalation</span>
-                            <?php endif; ?>
                         </div>
                     </a>
                 <?php endforeach; ?>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-border mt-16 py-6">
-        <div class="max-w-[1600px] mx-auto px-6 flex justify-between mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span>PMO // Build 026.27</span>
-            <span>Last sync: live</span>
+    <!-- Footer Component -->
+    <footer class="w-full px-8 lg:px-14 py-10 border-t border-ink/15 mt-10">
+        <div class="flex justify-between items-center text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            <span>Atlas / Project Studio</span>
+            <span>© 2026</span>
         </div>
     </footer>
 </div>
+
 <?= $this->endSection() ?>
